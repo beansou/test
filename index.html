@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>4:6 Coffee Timer</title>
+    <title>4:6 冠軍手沖計時器</title>
     
     <!-- iOS 專用設定 (讓它看起來像 App) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="4:6 Coffee">
-    <!-- 請將此處替換為您上傳的 Logo 圖片連結或檔名 -->
-    <link rel="apple-touch-icon" href="my_coffee_logo.png">
+    <!-- 預留 Logo 圖片連結位置 -->
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/78350F/fff?text=Coffee">
 
     <!-- 引入 React 和 Tailwind -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -19,13 +19,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        /* 禁止選取文字，更有 App 的質感 */
-        body { user-select: none; -webkit-user-select: none; }
+        /* 引入 Inter 字體以獲得現代感 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        body { 
+            user-select: none; 
+            -webkit-user-select: none; 
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden; /* 防止橫向滾動 */
+        }
+        
         /* 隱藏滾動條 */
         ::-webkit-scrollbar { display: none; }
+        
+        /* 自定義滑塊顏色 */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #D97706; /* amber-600 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 4px solid #FEF3C7; /* amber-50 */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
-<body class="bg-stone-800">
+<body class="bg-stone-900">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -34,37 +55,40 @@
         // 設定 GO 畫面的額外停留時間 (1000ms = 1秒)
         const GO_SCREEN_HOLD_DURATION_MS = 1000;
 
-        // 簡單的圖示組件 (SVG)
-        const Icon = ({ path }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        // 簡單的 Lucide-React 風格圖示組件 (SVG)
+        const Icon = ({ path, className = '' }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 <path d={path} />
             </svg>
         );
 
+        // 使用更具語義的圖示
         const Icons = {
-            Coffee: () => <Icon path="M18 8h1a4 4 0 0 1 0 8h-1 M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3" />,
-            Settings: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
-            Droplets: () => <Icon path="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.8-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z M17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17.29 6.75 17 5.3c-.29 1.45-1.14 2.8-2.29 3.76S13 11.1 13 12.25c0 2.22 1.8 4.05 4 4.05z" />,
-            Timer: () => <Icon path="M10 2h4 M12 14v-4 M4 13a8 8 0 0 1 8-7 8 8 0 1 1-8 7z" />,
-            Play: () => <Icon path="M5 3l14 9-14 9V3z" />,
-            RefreshCw: () => <Icon path="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8 M21 3v5h-5 M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16 M3 21v-5h5" />,
-            Volume2: () => <Icon path="M11 5L6 9H2v6h4l5 4V5z M19.07 4.93a10 10 0 0 1 0 14.14 M15.54 8.46a5 5 0 0 1 0 7.07" />,
-            VolumeX: () => <Icon path="M11 5L6 9H2v6h4l5 4V5z M23 9l-6 6 M17 9l6 6" />
+            Coffee: (props) => <Icon path="M17 8h1a4 4 0 0 1 0 8h-1 M2 8h15v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M12 2v2" {...props} />, // Coffee: added steam lines
+            Settings: (props) => <Icon path="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>" {...props} />,
+            Droplets: (props) => <Icon path="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.8-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z M17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17.29 6.75 17 5.3c-.29 1.45-1.14 2.8-2.29 3.76S13 11.1 13 12.25c0 2.22 1.8 4.05 4 4.05z" {...props} />,
+            Timer: (props) => <Icon path="M10 2h4 M12 14v-4 M4 13a8 8 0 0 1 8-7 8 8 0 1 1-8 7z" {...props} />,
+            Play: (props) => <Icon path="M5 3l14 9-14 9V3z" {...props} />,
+            RefreshCw: (props) => <Icon path="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8 M21 3v5h-5 M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16 M3 21v-5h5" {...props} />,
+            Volume2: (props) => <Icon path="M11 5L6 9H2v6h4l5 4V5z M19.07 4.93a10 10 0 0 1 0 14.14 M15.54 8.46a5 5 0 0 1 0 7.07" {...props} />,
+            VolumeX: (props) => <Icon path="M11 5L6 9H2v6h4l5 4V5z M23 9l-6 6 M17 9l6 6" {...props} />,
+            Edit: (props) => <Icon path="M12 20h9 M16.5 3.5l4 4L7.5 20.5H4v-3.5L16.5 3.5z" {...props} />,
         };
 
         const CoffeeApp = () => {
             const [beans, setBeans] = useState(20);
             const [ratio, setRatio] = useState(15);
-            // 修正: 預設風味設定為 'sweet' (偏甜)
+            // 風味設定：'sweet' (偏甜), 'balanced' (平衡), 'acidic' (偏酸)
             const [flavor, setFlavor] = useState('sweet');
-            const [strength, setStrength] = useState('strong'); // Default strong
+            // 濃度設定：'standard' (標準/2段), 'strong' (更濃/3段)
+            const [strength, setStrength] = useState('strong');
             const [isBrewing, setIsBrewing] = useState(false);
             const [timer, setTimer] = useState(0);
             const [currentStepIndex, setCurrentStepIndex] = useState(0);
             const [soundEnabled, setSoundEnabled] = useState(true);
             const [countdown, setCountdown] = useState(null);
             
-            // 新增狀態用於點擊編輯
+            // 編輯狀態
             const [isEditingBeans, setIsEditingBeans] = useState(false);
             const [tempBeans, setTempBeans] = useState(20);
             const beansInputRef = useRef(null);
@@ -73,20 +97,26 @@
             const audioCtxRef = useRef(null);
             const wakeLockRef = useRef(null); 
 
+            // --- 計算核心參數 ---
             const totalWater = beans * ratio;
-            const phase1Water = totalWater * 0.4;
-            const phase2Water = totalWater * 0.6;
+            const phase1Water = totalWater * 0.4; // 40% - 風味調整
+            const phase2Water = totalWater * 0.6; // 60% - 濃度調整
 
             const getSteps = () => {
                 let steps = [];
                 let s1, s2;
+
+                // 40% - 風味區塊 (兩段)
                 if (flavor === 'sweet') { s1 = phase1Water * 0.4; s2 = phase1Water * 0.6; }
                 else if (flavor === 'acidic') { s1 = phase1Water * 0.6; s2 = phase1Water * 0.4; }
-                else { s1 = phase1Water * 0.5; s2 = phase1Water * 0.5; }
-                
+                else { s1 = phase1Water * 0.5; s2 = phase1Water * 0.5; } // balanced
+
+                // 階段 1：悶蒸/第一次注水 (Phase 1)
                 steps.push({ weight: s1, cumulative: s1, text: "第 1 注 (悶蒸)", duration: 45 });
+                // 階段 2：第二次注水 (Phase 2)
                 steps.push({ weight: s2, cumulative: s1 + s2, text: "第 2 注 (風味)", duration: 45 });
 
+                // 60% - 濃度區塊 (2 段或 3 段)
                 const strengthCount = strength === 'strong' ? 3 : 2;
                 const perStep = phase2Water / strengthCount;
                 let currentCumulative = s1 + s2;
@@ -101,32 +131,28 @@
             const steps = getSteps();
             const currentStep = steps[currentStepIndex];
 
-            // 數據計算
-            const currentStepStartTime = steps.slice(0, currentStepIndex).reduce((acc, s) => acc + s.duration, 0);
+            // 數據計算 (用於顯示)
+            const getStepAccumulatedTime = (index) => 
+                steps.slice(0, index).reduce((acc, s) => acc + s.duration, 0);
+
+            const currentStepStartTime = getStepAccumulatedTime(currentStepIndex);
             const timeInCurrentStep = timer - currentStepStartTime;
             const remainingTimeInStep = Math.max(0, currentStep.duration - timeInCurrentStep);
             const progressPercent = Math.min(100, (timeInCurrentStep / currentStep.duration) * 100);
 
-            // 取得下一個累積目標重量，若無下一步則為總水量
-            const nextCumulativeWater = currentStepIndex < steps.length - 1 
-                                        ? Math.round(steps[currentStepIndex + 1].cumulative) 
-                                        : Math.round(totalWater);
+            // 取得下一個累積目標重量 (用於 UI 提示)
+            const nextCumulativeWater = currentStepIndex < steps.length - 1
+                                             ? Math.round(steps[currentStepIndex + 1].cumulative)
+                                             : Math.round(totalWater);
 
             // --- 螢幕常亮邏輯 (Screen Wake Lock) ---
             useEffect(() => {
                 const requestWakeLock = async () => {
+                    if (!('wakeLock' in navigator)) return;
                     try {
-                        if ('wakeLock' in navigator) {
-                            wakeLockRef.current = await navigator.wakeLock.request('screen');
-                            console.log('螢幕鎖定已啟用');
-                        }
+                        wakeLockRef.current = await navigator.wakeLock.request('screen');
                     } catch (err) {
-                        // 修復: 捕獲 Feature-Policy 錯誤，並在控制台輸出警告而不是錯誤，避免主控台被錯誤訊息佔滿。
-                        if (err.name === 'NotAllowedError' && err.message.includes('Feature-Policy')) {
-                            console.warn('螢幕鎖定功能已被瀏覽器政策阻擋 (Feature-Policy)，不影響App主要功能運行，App將使用瀏覽器本身的省電設定。');
-                        } else {
-                            console.error('無法鎖定螢幕:', err);
-                        }
+                        if (err.name !== 'NotAllowedError') console.error('無法鎖定螢幕:', err);
                     }
                 };
 
@@ -135,11 +161,7 @@
                         try {
                             await wakeLockRef.current.release();
                             wakeLockRef.current = null;
-                            console.log('螢幕鎖定已解除');
-                        } catch (err) {
-                            // 釋放鎖定時的錯誤通常不影響 App 運行
-                            console.error('釋放螢幕鎖定失敗:', err);
-                        }
+                        } catch (err) { /* 忽略釋放時的錯誤 */ }
                     }
                 };
 
@@ -163,12 +185,16 @@
             }, [isBrewing, countdown]);
 
 
-            // 音效播放函數
+            // 音效播放函數 (使用 Web Audio API)
             const playBeep = (type) => {
                 if (!soundEnabled) return;
 
                 if (!audioCtxRef.current) {
                     audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                // 確保 Context 處於運行狀態
+                if (audioCtxRef.current.state === 'suspended') {
+                    audioCtxRef.current.resume();
                 }
 
                 const ctx = audioCtxRef.current;
@@ -181,19 +207,21 @@
                 const now = ctx.currentTime;
 
                 if (type === 'tick') {
+                    // 倒數計時聲
                     osc.frequency.setValueAtTime(600, now);
                     osc.type = 'sine';
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                     osc.start(now);
                     osc.stop(now + 0.1);
-                } else if (type === 'start') {
+                } else if (type === 'start' || type === 'step_change') {
+                    // 開始或步驟切換聲 (長音/高音)
                     osc.frequency.setValueAtTime(880, now);
                     osc.type = 'sine';
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2); 
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5); 
                     osc.start(now);
-                    osc.stop(now + 1.2); 
+                    osc.stop(now + 0.5); 
                 }
             };
 
@@ -206,16 +234,16 @@
                     const timerId = setTimeout(() => setCountdown(prev => prev - 1), 1000);
                     return () => clearTimeout(timerId);
                 } else {
+                    // 倒數結束 (GO!)
                     playBeep('start'); 
                     
-                    // 修正邏輯：延長 GO 畫面停留時間 (1000ms)，並在切換時將計時器校準
                     const startDelay = setTimeout(() => {
                         setCountdown(null);
-                        // 將計時器設為 GO 畫面停留的秒數 (1 秒)，模擬計時器已在背景運行
+                        // 校準計時器為 1 秒 (GO 畫面停留的時間)
                         setTimer(GO_SCREEN_HOLD_DURATION_MS / 1000); 
                         setCurrentStepIndex(0);
                         setIsBrewing(true);
-                    }, GO_SCREEN_HOLD_DURATION_MS); // GO 畫面停留 1 秒
+                    }, GO_SCREEN_HOLD_DURATION_MS); 
                     return () => clearTimeout(startDelay);
                 }
             }, [countdown]);
@@ -232,37 +260,44 @@
             useEffect(() => {
                 if (!isBrewing) return;
                 
-                let timeAccumulated = 0;
-                for (let i = 0; i < currentStepIndex; i++) timeAccumulated += steps[i].duration;
+                let timeAccumulated = getStepAccumulatedTime(currentStepIndex);
                 const stepEndTime = timeAccumulated + currentStep.duration;
 
-                if (timer > 0) {
-                    const timeRemaining = stepEndTime - timer;
-                    if (timeRemaining <= 3 && timeRemaining >= 1) {
-                        playBeep('tick');
-                    }
+                // 3 秒提醒音效
+                const timeRemaining = stepEndTime - timer;
+                if (timeRemaining === 3 || timeRemaining === 2 || timeRemaining === 1) {
+                    playBeep('tick');
                 }
 
-                if (timer > 0 && timer === stepEndTime) {
-                     playBeep('start'); 
-                }
-
-                if (timer >= stepEndTime) {
+                // 步驟切換/結束
+                if (timer > 0 && timer >= stepEndTime) {
                     if (currentStepIndex < steps.length - 1) {
+                        playBeep('step_change'); 
                         setCurrentStepIndex(prev => prev + 1);
                     } else {
+                        // 沖煮完成
+                        playBeep('step_change'); // 結束音效
                         setIsBrewing(false);
+                        // 移除濾杯提示
                     }
                 }
             }, [timer, isBrewing, currentStepIndex, steps]);
 
+            // 格式化時間 mm:ss
             const formatTime = (seconds) => {
                 const m = Math.floor(seconds / 60).toString().padStart(2, '0');
                 const s = (seconds % 60).toString().padStart(2, '0');
                 return `${m}:${s}`;
             };
 
+            // 開始沖煮
             const handleStart = () => {
+                if (beans < 10 || beans > 40) {
+                     console.error("咖啡粉量必須在 10g 到 40g 之間");
+                     // 可以在此處添加一個更友好的彈出提示，而不是 console.error
+                     return;
+                }
+                
                 if (!audioCtxRef.current) {
                     audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
                 } else if (audioCtxRef.current.state === 'suspended') {
@@ -271,21 +306,26 @@
                 setCountdown(3);
             };
             
+            // 重設計時器
             const handleReset = () => { setIsBrewing(false); setTimer(0); setCurrentStepIndex(0); setCountdown(null); };
 
-            // 處理粉量編輯邏輯
+            // 處理粉量編輯邏輯 (點擊數字)
             const handleBeansClick = () => {
+                if (isBrewing) return; // 沖煮中不能編輯
                 setIsEditingBeans(true);
                 setTempBeans(beans);
-                // 讓輸入框獲得焦點，以便用戶直接輸入
                 setTimeout(() => beansInputRef.current && beansInputRef.current.focus(), 0);
             };
 
+            // 提交粉量
             const handleBeansSubmit = () => {
-                let newBeans = Number(tempBeans);
+                let newBeans = Math.round(Number(tempBeans));
                 // 確保數值在 10g 到 40g 的範圍內，並為整數
                 if (!isNaN(newBeans) && newBeans >= 10 && newBeans <= 40) {
-                    setBeans(Math.round(newBeans));
+                    setBeans(newBeans);
+                } else {
+                    // 如果輸入無效，恢復到舊值
+                    setTempBeans(beans); 
                 }
                 setIsEditingBeans(false);
             };
@@ -296,38 +336,42 @@
                 }
             };
             
-            // UI 部分
+            // --- UI 組件 ---
+
+            // 倒數畫面
             if (countdown !== null) {
                 return (
-                    <div className={`min-h-screen font-sans flex flex-col items-center justify-center animate-in fade-in duration-300 ${countdown === 0 ? 'bg-teal-600' : 'bg-amber-900'}`}>
-                        {/* 恢復數字和 GO 的顏色 */}
-                        <div className={`text-[12rem] font-bold leading-none animate-bounce ${countdown === 0 ? 'text-yellow-300' : 'text-white'} transition-colors duration-300`}>
+                    <div className={`min-h-screen font-sans flex flex-col items-center justify-center animate-in fade-in duration-300 ${countdown === 0 ? 'bg-amber-700' : 'bg-stone-900'}`}>
+                        <div className={`text-[12rem] font-extrabold leading-none transition-colors duration-500 ${countdown === 0 ? 'text-yellow-300 animate-pulse' : 'text-stone-100'}`}>
                             {countdown === 0 ? "GO!" : countdown}
                         </div>
-                        <div className={`mt-8 text-2xl font-bold tracking-widest uppercase ${countdown === 0 ? 'text-teal-100' : 'text-amber-100'} transition-colors duration-300`}>
-                            {countdown === 0 ? "開始沖煮" : "準備注水"}
+                        <div className={`mt-8 text-2xl font-bold tracking-widest uppercase ${countdown === 0 ? 'text-amber-100' : 'text-stone-400'} transition-colors duration-300`}>
+                            {countdown === 0 ? "開始注水" : "準備"}
                         </div>
                     </div>
                 );
             }
 
+            // 設定/首頁畫面 (非沖煮中 & 計時器為 0)
             if (!isBrewing && timer === 0) {
                 return (
-                    <div className="min-h-screen bg-stone-50 text-stone-800 font-sans p-4 max-w-md mx-auto flex flex-col">
+                    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans p-4 max-w-md mx-auto flex flex-col">
                         <header className="mb-6 mt-4">
-                            <h1 className="text-3xl font-bold text-amber-900 flex items-center gap-2">
-                                <Icons.Coffee /> 4:6 Method
+                            <h1 className="text-4xl font-extrabold text-amber-900 flex items-center gap-2">
+                                <Icons.Coffee className="w-8 h-8"/> 4:6 Method
                             </h1>
-                            <p className="text-stone-500">粕谷哲冠軍手沖法</p>
+                            <p className="text-stone-500 mt-1">粕谷哲冠軍手沖法參數設定</p>
                         </header>
                         <div className="flex-1 space-y-6">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+                            
+                            {/* 咖啡粉量設定卡片 */}
+                            <div className="bg-white p-6 rounded-3xl shadow-xl border border-amber-200">
                                 <div className="flex justify-between items-center mb-4">
-                                    <label className="text-lg font-bold text-stone-700 flex items-center gap-2"><Icons.Settings /> 咖啡粉量</label>
+                                    <label className="text-xl font-bold text-stone-700 flex items-center gap-2"><Icons.Settings className="w-5 h-5"/> 咖啡粉量 (G)</label>
                                     
-                                    {/* 咖啡粉量 - 可點擊編輯 */}
-                                    {isEditingBeans ? (
-                                        <div className="flex items-center">
+                                    {/* 粉量輸入/顯示區 */}
+                                    <div className="flex items-center">
+                                        {isEditingBeans ? (
                                             <input
                                                 ref={beansInputRef}
                                                 type="number"
@@ -337,138 +381,241 @@
                                                 onKeyDown={handleKeyDown}
                                                 min="10"
                                                 max="40"
-                                                className="w-16 text-2xl font-bold text-amber-700 bg-stone-100 rounded-lg text-right p-1 border border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                className="w-20 text-4xl font-extrabold text-amber-700 bg-amber-50 rounded-lg text-right p-1 border-2 border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-300 transition-all"
                                             />
-                                            <span className="text-2xl font-bold text-amber-700 ml-1">g</span>
-                                        </div>
-                                    ) : (
-                                        <span onClick={handleBeansClick} className="text-2xl font-bold text-amber-700 cursor-pointer p-1">
-                                            {beans}g
-                                        </span>
-                                    )}
+                                        ) : (
+                                            <span 
+                                                onClick={handleBeansClick} 
+                                                className="text-4xl font-extrabold text-amber-700 cursor-pointer p-1 transition-colors hover:text-amber-900 flex items-center gap-1"
+                                            >
+                                                {beans}<span className="text-2xl font-normal text-stone-500">g</span>
+                                                <Icons.Edit className="w-4 h-4 text-stone-400 hover:text-amber-500"/>
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 
-                                {/* Slider 依然保持同步，但只在非編輯模式下可操作 */}
                                 <input 
                                     type="range" 
                                     min="10" 
                                     max="40" 
                                     step="1" 
                                     value={beans} 
-                                    onChange={(e) => setBeans(Number(e.target.value))} 
-                                    className="w-full accent-amber-600 h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer" 
+                                    onChange={(e) => {
+                                        setBeans(Number(e.target.value));
+                                        setTempBeans(Number(e.target.value)); // 同步滑塊和暫存值
+                                    }} 
+                                    className="w-full h-2 bg-stone-300 rounded-full appearance-none cursor-pointer mt-2" 
                                     disabled={isEditingBeans}
                                 />
-                                <div className="text-right text-sm text-stone-400 mt-2">總注水量: {Math.round(totalWater)}ml (1:{ratio})</div>
+                                <div className="text-right text-sm text-stone-500 mt-3 border-t border-stone-100 pt-2">
+                                    總注水量: <span className="font-bold text-amber-700">{Math.round(totalWater)}ml</span> (水粉比 1:{ratio})
+                                </div>
                             </div>
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
-                                <label className="block text-lg font-bold text-stone-700 mb-3 flex items-center gap-2"><Icons.Droplets /> 風味偏好 (前40%)</label>
-                                <div className="grid grid-cols-3 gap-2">
+
+                            {/* 風味偏好卡片 */}
+                            <div className="bg-white p-6 rounded-3xl shadow-xl border border-stone-200">
+                                <label className="block text-xl font-bold text-stone-700 mb-4 flex items-center gap-2"><Icons.Droplets className="w-5 h-5"/> 風味偏好 (前 40% 水量分配)</label>
+                                <div className="grid grid-cols-3 gap-3">
                                     {[{ id: 'sweet', label: '偏甜' }, { id: 'balanced', label: '平衡' }, { id: 'acidic', label: '偏酸' }].map((opt) => (
-                                        <button key={opt.id} onClick={() => setFlavor(opt.id)} className={`py-3 rounded-xl font-medium transition-all ${flavor === opt.id ? 'bg-amber-600 text-white shadow-md' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>{opt.label}</button>
+                                        <button 
+                                            key={opt.id} 
+                                            onClick={() => setFlavor(opt.id)} 
+                                            className={`py-4 rounded-xl font-medium transition-all duration-200 text-lg shadow-md ${
+                                                flavor === opt.id 
+                                                    ? 'bg-amber-600 text-white shadow-amber-500/50 scale-105 border-2 border-amber-300' 
+                                                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200 border border-stone-300'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
-                                <label className="block text-lg font-bold text-stone-700 mb-3 flex items-center gap-2"><Icons.Timer /> 濃度偏好 (後60%)</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {[{ id: 'standard', label: '標準 (2段)' }, { id: 'strong', label: '更濃 (3段)' }].map((opt) => (
-                                        <button key={opt.id} onClick={() => setStrength(opt.id)} className={`py-3 rounded-xl font-medium transition-all ${strength === opt.id ? 'bg-amber-800 text-white shadow-md' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>{opt.label}</button>
+
+                            {/* 濃度偏好卡片 */}
+                            <div className="bg-white p-6 rounded-3xl shadow-xl border border-stone-200">
+                                <label className="block text-xl font-bold text-stone-700 mb-4 flex items-center gap-2"><Icons.Timer className="w-5 h-5"/> 濃度偏好 (後 60% 段數)</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[{ id: 'standard', label: '標準 (2 段)' }, { id: 'strong', label: '更濃 (3 段)' }].map((opt) => (
+                                        <button 
+                                            key={opt.id} 
+                                            onClick={() => setStrength(opt.id)} 
+                                            className={`py-4 rounded-xl font-medium transition-all duration-200 text-lg shadow-md ${
+                                                strength === opt.id 
+                                                    ? 'bg-amber-800 text-white shadow-amber-800/50 scale-105 border-2 border-amber-600' 
+                                                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200 border border-stone-300'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
                         </div>
-                        <button onClick={handleStart} className="mt-6 w-full py-4 bg-amber-900 text-white rounded-full text-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"><Icons.Play /> 開始沖煮</button>
+
+                        {/* 開始按鈕 */}
+                        <button 
+                            onClick={handleStart} 
+                            className="mt-8 w-full py-5 bg-amber-900 text-white rounded-2xl text-2xl font-bold shadow-2xl shadow-amber-900/60 flex items-center justify-center gap-3 active:scale-95 transition-transform duration-150 transform"
+                        >
+                            <Icons.Play className="w-6 h-6 fill-white"/> 
+                            開始沖煮
+                        </button>
                     </div>
                 );
             }
 
+            // 沖煮中或完成畫面
             const isFinished = !isBrewing && timer > 0;
+            const stepDescription = currentStep?.text.split('(')[1]?.replace(')', '') || '等待';
+            const totalDuration = steps.reduce((acc, s) => acc + s.duration, 0);
+
             return (
-                <div className="min-h-screen bg-stone-800 text-stone-100 font-sans flex flex-col items-center justify-between p-6">
-                    <div className="w-full max-w-md flex justify-between items-center">
-                        <button onClick={handleReset} className="p-2 bg-stone-700 rounded-full text-stone-300"><Icons.RefreshCw /></button>
-                        <div className="text-stone-400 font-mono text-xl">{formatTime(timer)}</div>
-                        <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 bg-stone-700 rounded-full text-stone-300">{soundEnabled ? <Icons.Volume2 /> : <Icons.VolumeX />}</button>
+                <div className="min-h-screen bg-stone-900 text-stone-100 font-sans flex flex-col items-center justify-between p-6">
+                    
+                    {/* 上方控制列與總計時器 */}
+                    <div className="w-full max-w-md flex justify-between items-center mb-8">
+                        <button onClick={handleReset} className="p-3 bg-stone-700 rounded-xl text-stone-300 hover:bg-stone-600 transition-colors shadow-lg active:scale-95">
+                            <Icons.RefreshCw className="w-6 h-6"/>
+                        </button>
+                        <div className="text-stone-400 font-mono text-3xl font-light tracking-wider">
+                            {formatTime(timer)} / {formatTime(totalDuration)}
+                        </div>
+                        <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-3 bg-stone-700 rounded-xl text-stone-300 hover:bg-stone-600 transition-colors shadow-lg active:scale-95">
+                            {soundEnabled ? <Icons.Volume2 className="w-6 h-6"/> : <Icons.VolumeX className="w-6 h-6"/>}
+                        </button>
                     </div>
+
+                    {/* 中央內容區塊 */}
                     <div className="flex-1 flex flex-col justify-center items-center w-full max-w-md text-center">
+                        
                         {isFinished ? (
-                            <div className="animate-in fade-in zoom-in duration-500">
-                                <div className="text-6xl mb-4">☕️</div>
-                                <h2 className="text-3xl font-bold text-amber-400 mb-2">沖煮完成!</h2>
-                                <p className="text-stone-300">請移除濾杯，攪拌均勻後享用。</p>
-                                <div className="mt-8 p-4 bg-stone-700/50 rounded-xl w-full">
-                                    <div className="text-sm text-stone-400">總注水量</div>
-                                    <div className="text-3xl font-mono text-white">{Math.round(totalWater)}g</div>
+                            // 沖煮完成畫面
+                            <div className="animate-in fade-in zoom-in duration-500 p-8 bg-stone-800 rounded-3xl shadow-2xl shadow-stone-950/70">
+                                <div className="text-7xl mb-4 animate-bounce">☕️</div>
+                                <h2 className="text-4xl font-bold text-amber-400 mb-4">沖煮完成!</h2>
+                                <p className="text-stone-300 text-lg">請於 <span className="font-bold">{formatTime(timer)}</span> 移除濾杯，攪拌享用。</p>
+                                <div className="mt-8 p-4 bg-stone-700 rounded-xl w-full">
+                                    <div className="text-sm text-stone-400 uppercase tracking-widest">目標總水量 (已達)</div>
+                                    <div className="text-4xl font-mono text-white mt-1">{Math.round(totalWater)}g</div>
                                 </div>
                             </div>
                         ) : (
+                            // 沖煮中畫面
                             <>
-                                <div className="mb-8">
-                                    {/* 主要目標顯示區塊 */}
-                                    <div className="text-stone-400 text-lg mb-2 uppercase tracking-widest">緩慢注水至</div>
-                                    <div className="text-7xl font-bold font-mono text-white tracking-tighter transition-all duration-300">{Math.round(currentStep.cumulative)}<span className="text-3xl text-amber-500 ml-2">g</span></div>
+                                {/* 🎯 主要目標顯示區塊 */}
+                                <div className="mb-10 p-4 rounded-xl bg-stone-800/80 w-full backdrop-blur-sm shadow-inner shadow-stone-950">
+                                    <div className="text-amber-400 text-2xl mb-2 uppercase tracking-widest font-bold">{currentStep?.text.split('(')[0] || '開始'}</div>
+                                    <div className="text-stone-400 text-lg font-mono">
+                                        <span className="font-light">緩慢注水至</span>
+                                    </div>
                                     
-                                    {/* 新增：下一個注水目標提示 */}
-                                    {currentStepIndex < steps.length - 1 && (
-                                        <div className="mt-2 text-stone-500 text-sm">
-                                            下一個注水的累積目標: <span className="text-stone-300 font-bold">{nextCumulativeWater}g</span>
-                                        </div>
-                                    )}
+                                    <div className="text-9xl font-extrabold font-mono text-white tracking-tighter mt-1 transition-all duration-300">
+                                        {Math.round(currentStep.cumulative)}
+                                        <span className="text-4xl text-amber-500 ml-3 font-normal">g</span>
+                                    </div>
+                                    
+                                    {/* 下一步提示 */}
+                                    <div className="mt-2 text-stone-500 text-sm border-t border-stone-700/50 pt-2">
+                                        {currentStepIndex < steps.length - 1 ? (
+                                            <>下一次目標: <span className="text-stone-300 font-bold">{nextCumulativeWater}g</span></>
+                                        ) : (
+                                            '這是最後一次注水'
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="bg-stone-700/50 p-6 rounded-2xl w-full backdrop-blur-sm border border-stone-600">
-                                    <div className="flex items-center justify-center gap-2 text-amber-400 font-bold text-xl mb-2"><Icons.Droplets /> {currentStep.text.split('(')[1].replace(')', '')}</div>
+                                {/* ⏲️ 步驟時間與進度條 */}
+                                <div className="bg-stone-800/90 p-6 rounded-3xl w-full border border-stone-700 shadow-xl shadow-stone-950/50">
+                                    <div className="flex items-center justify-center gap-3 text-amber-500 font-bold text-2xl mb-4">
+                                        <Icons.Droplets className="w-6 h-6"/> {stepDescription}
+                                    </div>
                                     
-                                    <div className="mt-8 relative">
+                                    <div className="relative mt-8">
                                         <div className="flex justify-between items-end mb-2">
-                                            <span className="text-xs text-stone-500 font-mono">0s</span>
+                                            <span className="text-sm text-stone-500 font-mono">0s</span>
                                             <div className="flex flex-col items-center">
-                                                <span className="text-[10px] text-stone-400 uppercase tracking-wider">Next Step In</span>
-                                                <span className="text-2xl font-bold font-mono text-amber-400 animate-pulse">{remainingTimeInStep}s</span>
+                                                <span className="text-xs text-stone-400 uppercase tracking-wider">Next Step In</span>
+                                                <span className="text-4xl font-bold font-mono text-amber-400 animate-pulse">{remainingTimeInStep}s</span>
                                             </div>
-                                            <span className="text-xs text-stone-500 font-mono">{currentStep.duration}s</span>
+                                            <span className="text-sm text-stone-500 font-mono">{currentStep.duration}s</span>
                                         </div>
-                                        <div className="h-4 bg-stone-600 rounded-full overflow-hidden border border-stone-500/30">
-                                            <div className="h-full bg-amber-500 transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(245,158,11,0.5)]" style={{ width: `${progressPercent}%` }}></div>
+                                        <div className="h-4 bg-stone-700 rounded-full overflow-hidden border border-stone-600">
+                                            {/* 進度條 */}
+                                            <div 
+                                                className="h-full bg-amber-500 transition-all duration-1000 ease-linear shadow-[0_0_15px_rgba(245,158,11,0.8)]" 
+                                                style={{ width: `${progressPercent}%` }}
+                                            ></div>
                                         </div>
                                     </div>
                                 </div>
                             </>
                         )}
                     </div>
-                    {/* 步驟列表間距 mt-4 */}
-                    <div className="w-full max-w-md mt-4 space-y-2 opacity-60"> 
+                    
+                    {/* 📚 步驟列表 (底部) */}
+                    <div className="w-full max-w-md mt-8 space-y-3"> 
                         {steps.map((step, idx) => {
-                            let cumulativeTime = 0;
-                            for (let i = 0; i <= idx; i++) {
-                                cumulativeTime += steps[i].duration;
-                            }
+                            let cumulativeTime = getStepAccumulatedTime(idx + 1);
                             
+                            const isCurrent = idx === currentStepIndex && isBrewing;
+                            const isCompleted = idx < currentStepIndex || isFinished;
+
                             return (
-                                <div key={idx} className={`flex items-center justify-between p-4 rounded-xl text-base transition-colors ${idx === currentStepIndex && isBrewing ? 'bg-amber-900/40 text-amber-200 border border-amber-700/50' : 'text-stone-500'}`}>
+                                <div 
+                                    key={idx} 
+                                    className={`flex items-center justify-between p-3 rounded-xl transition-all duration-300 ${
+                                        isCurrent 
+                                            ? 'bg-amber-900/50 text-amber-100 shadow-md border-l-4 border-amber-500' 
+                                            : isCompleted 
+                                                ? 'bg-stone-800 text-stone-400' 
+                                                : 'bg-stone-800 text-stone-600'
+                                    }`}
+                                >
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-base font-bold ${idx < currentStepIndex || isFinished ? 'bg-amber-600 text-white' : idx === currentStepIndex ? 'bg-amber-500 text-stone-900 animate-pulse' : 'bg-stone-700'}`}>{idx + 1}</div>
-                                        <div className="flex flex-col text-left ml-1">
-                                            <span className="text-amber-500 font-mono text-sm font-bold">
+                                        {/* 圓形步驟標誌 */}
+                                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg font-bold ${
+                                            isCurrent 
+                                                ? 'bg-amber-500 text-stone-900 shadow-lg animate-pulse' 
+                                                : isCompleted 
+                                                    ? 'bg-amber-700 text-white' 
+                                                    : 'bg-stone-700 text-stone-400'
+                                        }`}>
+                                            {idx + 1}
+                                        </div>
+                                        
+                                        <div className="flex flex-col text-left">
+                                            {/* 時間和持續時間 */}
+                                            <span className={`font-mono text-sm font-semibold ${isCurrent ? 'text-amber-300' : 'text-stone-500'}`}>
                                                 {formatTime(cumulativeTime)} <span className="text-xs font-normal opacity-75">({step.duration}s)</span>
                                             </span>
-                                            {/* 顯示累積水量，括號中顯示當前新增水量 */}
-                                            <span className="font-bold text-lg text-stone-300">
+                                            
+                                            {/* 水量資訊 */}
+                                            <span className="font-extrabold text-xl text-stone-200">
                                                 {Math.round(step.cumulative)}g
-                                                <span className="font-normal text-sm text-stone-400"> (+{Math.round(step.weight)}g)</span>
+                                                <span className={`font-normal text-sm ml-2 ${isCurrent ? 'text-amber-200' : 'text-stone-400'}`}> (+{Math.round(step.weight)}g)</span>
                                             </span>
                                         </div>
                                     </div>
+                                    
                                     <div className="text-right flex flex-col items-end">
-                                        <span className="text-xs font-bold text-stone-500 tracking-wider uppercase mb-1">{step.text.split('(')[0]}</span>
-                                        <span className="text-lg font-bold text-stone-200">{step.text.split('(')[1] ? step.text.split('(')[1].replace(')', '') : ''}</span>
+                                        <span className="text-xs font-bold text-stone-500 tracking-wider uppercase mb-1">目標</span>
+                                        <span className={`text-lg font-bold ${isCurrent ? 'text-amber-100' : 'text-stone-300'}`}>{stepDescription}</span>
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
-                    {isFinished && <button onClick={handleReset} className="mt-6 w-full py-4 bg-stone-700 hover:bg-stone-600 text-white rounded-full text-xl font-bold shadow-lg transition-colors">再煮一杯</button>}
+
+                    {isFinished && (
+                        <button 
+                            onClick={handleReset} 
+                            className="mt-6 w-full max-w-md py-4 bg-stone-700 hover:bg-stone-600 text-white rounded-xl text-xl font-bold shadow-lg transition-colors active:scale-95"
+                        >
+                            再煮一杯
+                        </button>
+                    )}
                 </div>
             );
         };
