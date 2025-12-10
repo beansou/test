@@ -5,34 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>4:6 冠軍手沖計時器</title>
     
-    <!-- iOS 專用設定 (讓它看起來像 App) -->
+    <!-- iOS 專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="4:6 Coffee">
-    <!-- 預留 Logo 圖片連結位置 -->
     <link rel="apple-touch-icon" href="https://placehold.co/180x180/78350F/fff?text=Coffee">
 
-    <!-- 引入 React 和 Tailwind -->
+    <!-- 引入 React 和 Tailwind CDN (確保外部連結) -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        /* 引入 Inter 字體以獲得現代感 */
+        /* 設置全局字體為 Inter */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         
         body { 
             user-select: none; 
             -webkit-user-select: none; 
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden; /* 防止橫向滾動 */
+            overflow-x: hidden; 
         }
         
         /* 隱藏滾動條 */
         ::-webkit-scrollbar { display: none; }
         
         /* 自定義滑塊顏色 */
+        /* Tailwind classes are usually sufficient, but explicit style ensures cross-browser consistency */
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -50,21 +50,20 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useRef, useCallback } = React;
         
         // 設定 GO 畫面的額外停留時間 (1000ms = 1秒)
         const GO_SCREEN_HOLD_DURATION_MS = 1000;
 
-        // 簡單的 Lucide-React 風格圖示組件 (SVG)
-        const Icon = ({ path, className = '' }) => (
+        // --- 圖示組件 (Icon Components) ---
+        const Icon = ({ path, className = 'w-6 h-6' }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 <path d={path} />
             </svg>
         );
 
-        // 使用更具語義的圖示
         const Icons = {
-            Coffee: (props) => <Icon path="M17 8h1a4 4 0 0 1 0 8h-1 M2 8h15v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M12 2v2" {...props} />, // Coffee: added steam lines
+            Coffee: (props) => <Icon path="M17 8h1a4 4 0 0 1 0 8h-1 M2 8h15v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M12 2v2" {...props} />,
             Settings: (props) => <Icon path="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>" {...props} />,
             Droplets: (props) => <Icon path="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.8-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z M17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17.29 6.75 17 5.3c-.29 1.45-1.14 2.8-2.29 3.76S13 11.1 13 12.25c0 2.22 1.8 4.05 4 4.05z" {...props} />,
             Timer: (props) => <Icon path="M10 2h4 M12 14v-4 M4 13a8 8 0 0 1 8-7 8 8 0 1 1-8 7z" {...props} />,
@@ -75,13 +74,63 @@
             Edit: (props) => <Icon path="M12 20h9 M16.5 3.5l4 4L7.5 20.5H4v-3.5L16.5 3.5z" {...props} />,
         };
 
+        // 音效播放函數 (使用 Web Audio API)
+        const useBeep = (soundEnabled) => {
+            const audioCtxRef = useRef(null);
+
+            const playBeep = useCallback((type) => {
+                if (!soundEnabled) return;
+
+                if (!audioCtxRef.current) {
+                    audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                // 確保 Context 處於運行狀態
+                if (audioCtxRef.current.state === 'suspended') {
+                    audioCtxRef.current.resume();
+                }
+
+                const ctx = audioCtxRef.current;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const now = ctx.currentTime;
+
+                if (type === 'tick') {
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'start' || type === 'step_change') {
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5); 
+                    osc.start(now);
+                    osc.stop(now + 0.5); 
+                }
+            }, [soundEnabled]);
+
+            return playBeep;
+        };
+        
+        // 格式化時間 mm:ss
+        const formatTime = (seconds) => {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        };
+
         const CoffeeApp = () => {
             const [beans, setBeans] = useState(20);
-            const [ratio, setRatio] = useState(15);
-            // 風味設定：'sweet' (偏甜), 'balanced' (平衡), 'acidic' (偏酸)
-            const [flavor, setFlavor] = useState('sweet');
-            // 濃度設定：'standard' (標準/2段), 'strong' (更濃/3段)
-            const [strength, setStrength] = useState('strong');
+            const ratio = 15; // 固定水粉比
+            const [flavor, setFlavor] = useState('sweet'); // 'sweet', 'balanced', 'acidic'
+            const [strength, setStrength] = useState('strong'); // 'standard', 'strong'
+            
             const [isBrewing, setIsBrewing] = useState(false);
             const [timer, setTimer] = useState(0);
             const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -94,15 +143,15 @@
             const beansInputRef = useRef(null);
 
             const intervalRef = useRef(null);
-            const audioCtxRef = useRef(null);
             const wakeLockRef = useRef(null); 
+            const playBeep = useBeep(soundEnabled);
 
             // --- 計算核心參數 ---
             const totalWater = beans * ratio;
             const phase1Water = totalWater * 0.4; // 40% - 風味調整
             const phase2Water = totalWater * 0.6; // 60% - 濃度調整
 
-            const getSteps = () => {
+            const getSteps = useCallback(() => {
                 let steps = [];
                 let s1, s2;
 
@@ -111,9 +160,9 @@
                 else if (flavor === 'acidic') { s1 = phase1Water * 0.6; s2 = phase1Water * 0.4; }
                 else { s1 = phase1Water * 0.5; s2 = phase1Water * 0.5; } // balanced
 
-                // 階段 1：悶蒸/第一次注水 (Phase 1)
+                // 階段 1：悶蒸/第一次注水
                 steps.push({ weight: s1, cumulative: s1, text: "第 1 注 (悶蒸)", duration: 45 });
-                // 階段 2：第二次注水 (Phase 2)
+                // 階段 2：第二次注水
                 steps.push({ weight: s2, cumulative: s1 + s2, text: "第 2 注 (風味)", duration: 45 });
 
                 // 60% - 濃度區塊 (2 段或 3 段)
@@ -126,10 +175,10 @@
                     steps.push({ weight: perStep, cumulative: currentCumulative, text: `第 ${i + 3} 注 (濃度)`, duration: 45 });
                 }
                 return steps;
-            };
+            }, [beans, flavor, strength, phase1Water, phase2Water]);
 
             const steps = getSteps();
-            const currentStep = steps[currentStepIndex];
+            const currentStep = steps[currentStepIndex] || {};
 
             // 數據計算 (用於顯示)
             const getStepAccumulatedTime = (index) => 
@@ -184,47 +233,6 @@
                 };
             }, [isBrewing, countdown]);
 
-
-            // 音效播放函數 (使用 Web Audio API)
-            const playBeep = (type) => {
-                if (!soundEnabled) return;
-
-                if (!audioCtxRef.current) {
-                    audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                // 確保 Context 處於運行狀態
-                if (audioCtxRef.current.state === 'suspended') {
-                    audioCtxRef.current.resume();
-                }
-
-                const ctx = audioCtxRef.current;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-
-                const now = ctx.currentTime;
-
-                if (type === 'tick') {
-                    // 倒數計時聲
-                    osc.frequency.setValueAtTime(600, now);
-                    osc.type = 'sine';
-                    gain.gain.setValueAtTime(0.15, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                    osc.start(now);
-                    osc.stop(now + 0.1);
-                } else if (type === 'start' || type === 'step_change') {
-                    // 開始或步驟切換聲 (長音/高音)
-                    osc.frequency.setValueAtTime(880, now);
-                    osc.type = 'sine';
-                    gain.gain.setValueAtTime(0.25, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5); 
-                    osc.start(now);
-                    osc.stop(now + 0.5); 
-                }
-            };
-
             // 倒數邏輯
             useEffect(() => {
                 if (countdown === null) return;
@@ -239,14 +247,13 @@
                     
                     const startDelay = setTimeout(() => {
                         setCountdown(null);
-                        // 校準計時器為 1 秒 (GO 畫面停留的時間)
                         setTimer(GO_SCREEN_HOLD_DURATION_MS / 1000); 
                         setCurrentStepIndex(0);
                         setIsBrewing(true);
                     }, GO_SCREEN_HOLD_DURATION_MS); 
                     return () => clearTimeout(startDelay);
                 }
-            }, [countdown]);
+            }, [countdown, playBeep]);
 
             // 計時器邏輯
             useEffect(() => {
@@ -258,7 +265,7 @@
 
             // 步驟切換與音效提醒
             useEffect(() => {
-                if (!isBrewing) return;
+                if (!isBrewing || !currentStep.duration) return;
                 
                 let timeAccumulated = getStepAccumulatedTime(currentStepIndex);
                 const stepEndTime = timeAccumulated + currentStep.duration;
@@ -278,30 +285,15 @@
                         // 沖煮完成
                         playBeep('step_change'); // 結束音效
                         setIsBrewing(false);
-                        // 移除濾杯提示
                     }
                 }
-            }, [timer, isBrewing, currentStepIndex, steps]);
-
-            // 格式化時間 mm:ss
-            const formatTime = (seconds) => {
-                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-                const s = (seconds % 60).toString().padStart(2, '0');
-                return `${m}:${s}`;
-            };
+            }, [timer, isBrewing, currentStepIndex, steps, playBeep, currentStep.duration]);
 
             // 開始沖煮
             const handleStart = () => {
                 if (beans < 10 || beans > 40) {
                      console.error("咖啡粉量必須在 10g 到 40g 之間");
-                     // 可以在此處添加一個更友好的彈出提示，而不是 console.error
                      return;
-                }
-                
-                if (!audioCtxRef.current) {
-                    audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-                } else if (audioCtxRef.current.state === 'suspended') {
-                    audioCtxRef.current.resume();
                 }
                 setCountdown(3);
             };
@@ -311,7 +303,7 @@
 
             // 處理粉量編輯邏輯 (點擊數字)
             const handleBeansClick = () => {
-                if (isBrewing) return; // 沖煮中不能編輯
+                if (isBrewing) return;
                 setIsEditingBeans(true);
                 setTempBeans(beans);
                 setTimeout(() => beansInputRef.current && beansInputRef.current.focus(), 0);
@@ -320,11 +312,9 @@
             // 提交粉量
             const handleBeansSubmit = () => {
                 let newBeans = Math.round(Number(tempBeans));
-                // 確保數值在 10g 到 40g 的範圍內，並為整數
                 if (!isNaN(newBeans) && newBeans >= 10 && newBeans <= 40) {
                     setBeans(newBeans);
                 } else {
-                    // 如果輸入無效，恢復到舊值
                     setTempBeans(beans); 
                 }
                 setIsEditingBeans(false);
@@ -403,9 +393,9 @@
                                     value={beans} 
                                     onChange={(e) => {
                                         setBeans(Number(e.target.value));
-                                        setTempBeans(Number(e.target.value)); // 同步滑塊和暫存值
+                                        setTempBeans(Number(e.target.value));
                                     }} 
-                                    className="w-full h-2 bg-stone-300 rounded-full appearance-none cursor-pointer mt-2" 
+                                    className="w-full h-2 bg-stone-300 rounded-full appearance-none cursor-pointer mt-2 accent-amber-600" 
                                     disabled={isEditingBeans}
                                 />
                                 <div className="text-right text-sm text-stone-500 mt-3 border-t border-stone-100 pt-2">
@@ -468,7 +458,7 @@
 
             // 沖煮中或完成畫面
             const isFinished = !isBrewing && timer > 0;
-            const stepDescription = currentStep?.text.split('(')[1]?.replace(')', '') || '等待';
+            const stepDescription = currentStep?.text?.split('(')[1]?.replace(')', '') || '等待';
             const totalDuration = steps.reduce((acc, s) => acc + s.duration, 0);
 
             return (
@@ -505,14 +495,14 @@
                             // 沖煮中畫面
                             <>
                                 {/* 🎯 主要目標顯示區塊 */}
-                                <div className="mb-10 p-4 rounded-xl bg-stone-800/80 w-full backdrop-blur-sm shadow-inner shadow-stone-950">
-                                    <div className="text-amber-400 text-2xl mb-2 uppercase tracking-widest font-bold">{currentStep?.text.split('(')[0] || '開始'}</div>
+                                <div className="mb-10 p-4 rounded-3xl bg-stone-800/80 w-full backdrop-blur-sm shadow-inner shadow-stone-950 border border-stone-700">
+                                    <div className="text-amber-400 text-2xl mb-2 uppercase tracking-widest font-bold">{currentStep?.text?.split('(')[0] || '開始'}</div>
                                     <div className="text-stone-400 text-lg font-mono">
                                         <span className="font-light">緩慢注水至</span>
                                     </div>
                                     
                                     <div className="text-9xl font-extrabold font-mono text-white tracking-tighter mt-1 transition-all duration-300">
-                                        {Math.round(currentStep.cumulative)}
+                                        {Math.round(currentStep?.cumulative || 0)}
                                         <span className="text-4xl text-amber-500 ml-3 font-normal">g</span>
                                     </div>
                                     
@@ -539,7 +529,7 @@
                                                 <span className="text-xs text-stone-400 uppercase tracking-wider">Next Step In</span>
                                                 <span className="text-4xl font-bold font-mono text-amber-400 animate-pulse">{remainingTimeInStep}s</span>
                                             </div>
-                                            <span className="text-sm text-stone-500 font-mono">{currentStep.duration}s</span>
+                                            <span className="text-sm text-stone-500 font-mono">{currentStep?.duration || 0}s</span>
                                         </div>
                                         <div className="h-4 bg-stone-700 rounded-full overflow-hidden border border-stone-600">
                                             {/* 進度條 */}
@@ -601,7 +591,7 @@
                                     
                                     <div className="text-right flex flex-col items-end">
                                         <span className="text-xs font-bold text-stone-500 tracking-wider uppercase mb-1">目標</span>
-                                        <span className={`text-lg font-bold ${isCurrent ? 'text-amber-100' : 'text-stone-300'}`}>{stepDescription}</span>
+                                        <span className={`text-lg font-bold ${isCurrent ? 'text-amber-100' : 'text-stone-300'}`}>{step.text.split('(')[1] ? step.text.split('(')[1].replace(')', '') : ''}</span>
                                     </div>
                                 </div>
                             );
@@ -625,3 +615,4 @@
     </script>
 </body>
 </html>
+
