@@ -2,650 +2,358 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>4:6 Future Brew</title>
-    
-    <!-- iOS PWA Settings -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-
-    <!-- Dependencies -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>極致旁路沖煮法 (Bypass Brew)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Removed external lucide scripts to prevent ReferenceErrors -->
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* iOS 26 Base Styles */
-        body { 
-            background-color: #000;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            user-select: none;
-            -webkit-user-select: none;
-            overflow: hidden;
-            touch-action: manipulation;
+        body {
+            background-color: #1c1917; /* stone-900 */
+            color: #e7e5e4; /* stone-200 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            touch-action: manipulation; /* 防止雙擊縮放 */
         }
-
-        /* Ambient Animation */
-        @keyframes float-slow {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(-20px, 10px) scale(1.1); }
+        .timer-font {
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', Courier, monospace;
         }
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
+        .btn-primary {
+            background: linear-gradient(135deg, #d4a373 0%, #a87b50 100%);
+            box-shadow: 0 4px 14px 0 rgba(212, 163, 115, 0.39);
         }
-        
-        .animate-blob {
-            animation: float-slow 10s infinite ease-in-out;
+        .btn-primary:active {
+            transform: scale(0.98);
         }
-
-        /* Hide Scrollbar */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Custom Range Slider */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
+        .step-active {
+            border-left: 4px solid #d4a373;
+            background-color: rgba(212, 163, 115, 0.1);
         }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 28px;
-            width: 28px;
-            border-radius: 50%;
-            background: #ffffff;
-            cursor: pointer;
-            margin-top: -12px;
-            box-shadow: 0 0 20px rgba(255,255,255,0.8);
-            border: 2px solid rgba(255,255,255,0.5);
+        .step-pending {
+            border-left: 4px solid #44403c;
+            color: #78716c;
         }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
+        .step-done {
+            border-left: 4px solid #10b981;
+            color: #78716c;
+            text-decoration: line-through;
         }
-        
-        /* Glass Utilities */
-        .glass-panel {
-            background: rgba(25, 25, 25, 0.6);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        /* Progress Bar Animation */
+        .progress-bar-fill {
+            transition: width 1s linear;
         }
-        .glass-button {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Custom Input Number Styling */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
         }
-        .glass-button:active {
-            transform: scale(0.96);
-            background: rgba(255, 255, 255, 0.1);
+        .control-panel {
+            transition: opacity 0.3s ease;
         }
-        .glass-button.active {
-            background: rgba(245, 158, 11, 0.2); /* Amber tint */
-            border-color: rgba(245, 158, 11, 0.5);
-            color: #fbbf24;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
-        }
-
-        /* Neon Text */
-        .text-glow {
-            text-shadow: 0 0 20px rgba(255,255,255,0.3);
-        }
-        .text-glow-amber {
-            text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        .control-disabled {
+            opacity: 0.5;
+            pointer-events: none;
         }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="flex flex-col h-screen overflow-hidden">
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+    <!-- Header & Settings -->
+    <div class="p-4 bg-stone-800 shadow-md z-10 flex flex-col items-center">
+        <h1 class="text-lg font-bold text-amber-500 mb-3"><i class="fas fa-mug-hot mr-2"></i>極致旁路沖煮法</h1>
         
-        // --- Internal Icon Components (Replacing External Dependency) ---
-        const IconBase = ({ size = 24, className = "", children }) => (
-            <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width={size} 
-                height={size} 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                className={className}
-            >
-                {children}
-            </svg>
-        );
+        <!-- Weight Adjuster -->
+        <div id="weightControl" class="control-panel flex items-center bg-stone-700 rounded-full px-2 py-1 mb-2 shadow-inner border border-stone-600">
+            <button onclick="adjustWeight(-1)" class="w-10 h-10 rounded-full text-stone-300 hover:text-white hover:bg-stone-600 active:bg-stone-500 transition-colors">
+                <i class="fas fa-minus"></i>
+            </button>
+            <div class="flex flex-col items-center mx-4 w-24">
+                <div class="flex items-baseline">
+                    <input type="number" id="coffeeInput" value="15" onchange="manualInput()" class="bg-transparent text-2xl font-bold text-center w-12 outline-none text-white border-b border-stone-500 focus:border-amber-500 transition-colors">
+                    <span class="text-sm font-bold ml-1 text-stone-400">g</span>
+                </div>
+                <span class="text-[10px] text-stone-400 uppercase tracking-wider">咖啡粉量</span>
+            </div>
+            <button onclick="adjustWeight(1)" class="w-10 h-10 rounded-full text-stone-300 hover:text-white hover:bg-stone-600 active:bg-stone-500 transition-colors">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
 
-        const Coffee = (props) => (
-            <IconBase {...props}>
-                <path d="M17 8h1a4 4 0 0 1 0 8h-1" />
-                <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
-                <line x1="6" x2="6" y1="2" y2="8" />
-                <line x1="10" x2="10" y1="2" y2="8" />
-                <line x1="14" x2="14" y1="2" y2="8" />
-            </IconBase>
-        );
+        <!-- Info Badges -->
+        <div class="flex space-x-4 text-xs text-stone-400">
+            <span class="bg-stone-700 px-2 py-1 rounded"><i class="fas fa-tint mr-1 text-blue-400"></i>總水量 <span id="totalWaterDisplay" class="text-stone-200 font-bold">150</span>g</span>
+            <span class="bg-stone-700 px-2 py-1 rounded"><i class="fas fa-thermometer-half mr-1 text-red-400"></i>85°C</span>
+        </div>
+    </div>
 
-        const Droplets = (props) => (
-            <IconBase {...props}>
-                <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.8-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" />
-                <path d="M17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17.29 6.75 17 5.3c-.29 1.45-1.14 2.8-2.29 3.76S13 11.1 13 12.25c0 2.22 1.8 4.05 4 4.05z" />
-            </IconBase>
-        );
-
-        const Timer = (props) => (
-            <IconBase {...props}>
-                <line x1="10" x2="14" y1="2" y2="2" />
-                <line x1="12" x2="15" y1="14" y2="11" />
-                <circle cx="12" cy="14" r="8" />
-            </IconBase>
-        );
-
-        const Play = (props) => (
-            <IconBase {...props}>
-                <polygon points="5 3 19 12 5 21 5 3" />
-            </IconBase>
-        );
-
-        const RotateCcw = (props) => (
-            <IconBase {...props}>
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                <path d="M3 3v5h5" />
-            </IconBase>
-        );
-
-        const Volume2 = (props) => (
-            <IconBase {...props}>
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-            </IconBase>
-        );
-
-        const VolumeX = (props) => (
-            <IconBase {...props}>
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <line x1="23" x2="17" y1="9" y2="15" />
-                <line x1="17" x2="23" y1="9" y2="15" />
-            </IconBase>
-        );
+    <!-- Main Display Area -->
+    <div class="flex-1 flex flex-col items-center justify-center p-4 relative">
         
-        const X = (props) => (
-            <IconBase {...props}>
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-            </IconBase>
-        );
+        <!-- Total Progress -->
+        <div class="w-full max-w-md h-1 bg-stone-700 rounded-full mb-6 overflow-hidden">
+            <div id="totalProgress" class="h-full bg-amber-500 w-0 progress-bar-fill"></div>
+        </div>
 
-        // --- Core Logic (Preserved) ---
-        const GO_SCREEN_HOLD_DURATION_MS = 1000;
+        <!-- Timer -->
+        <div id="timerDisplay" class="text-8xl font-bold mb-2 timer-font text-white tracking-tighter">00:00</div>
+        
+        <!-- Current Action -->
+        <div class="text-center h-32 flex flex-col justify-center items-center w-full max-w-md bg-stone-800/50 rounded-2xl p-4 backdrop-blur-sm border border-stone-700/50">
+            <div id="currentStepTitle" class="text-3xl font-bold text-amber-400 mb-2">準備開始</div>
+            <div id="currentStepDesc" class="text-lg text-stone-300">請確認水量與溫度</div>
+        </div>
+    </div>
 
-        const App = () => {
-            // State
-            const [beans, setBeans] = useState(20);
-            const [ratio, setRatio] = useState(15);
-            const [flavor, setFlavor] = useState('sweet'); // sweet, balanced, acidic
-            const [strength, setStrength] = useState('strong'); // standard, strong
-            const [isBrewing, setIsBrewing] = useState(false);
-            const [timer, setTimer] = useState(0);
-            const [currentStepIndex, setCurrentStepIndex] = useState(0);
-            const [soundEnabled, setSoundEnabled] = useState(true);
-            const [countdown, setCountdown] = useState(null);
-            
-            // Editing State
-            const [isEditingBeans, setIsEditingBeans] = useState(false);
-            const [tempBeans, setTempBeans] = useState(20);
-            const beansInputRef = useRef(null);
+    <!-- Timeline Scroll Area -->
+    <div class="h-1/3 bg-stone-900 border-t border-stone-700 overflow-y-auto p-4 space-y-3" id="stepsContainer">
+        <!-- Steps will be injected here -->
+    </div>
 
-            // Refs
-            const intervalRef = useRef(null);
-            const audioCtxRef = useRef(null);
-            const wakeLockRef = useRef(null);
+    <!-- Controls -->
+    <div class="p-4 bg-stone-800 pb-8 safe-area-bottom">
+        <button id="mainBtn" onclick="toggleTimer()" class="btn-primary w-full py-4 rounded-xl text-xl font-bold text-black shadow-lg flex items-center justify-center transition-all">
+            <i class="fas fa-play mr-2"></i> 開始沖煮
+        </button>
+        <button id="resetBtn" onclick="resetTimer()" class="w-full py-3 mt-3 text-stone-500 font-medium hover:text-stone-300 transition-colors hidden">
+            重置
+        </button>
+    </div>
 
-            // Calculations
-            const totalWater = beans * ratio;
-            const phase1Water = totalWater * 0.4;
-            const phase2Water = totalWater * 0.6;
+    <script>
+        // 核心參數比例 (相對於粉重)
+        // 原始配方: 15g粉 -> 15, 40, 60, 90 (Brew), +60 (Bypass)
+        const RATIOS = {
+            step1: 1,           // 15/15 = 1
+            step2: 40/15,       // 2.66...
+            step3: 4,           // 60/15 = 4
+            step4: 6,           // 90/15 = 6
+            bypass: 4           // 60/15 = 4
+        };
 
-            const getSteps = () => {
-                let steps = [];
-                let s1, s2;
-                // 4:6 Method Logic
-                if (flavor === 'sweet') { s1 = phase1Water * 0.4; s2 = phase1Water * 0.6; }
-                else if (flavor === 'acidic') { s1 = phase1Water * 0.6; s2 = phase1Water * 0.4; }
-                else { s1 = phase1Water * 0.5; s2 = phase1Water * 0.5; } // balanced
-                
-                steps.push({ weight: s1, cumulative: s1, text: "悶蒸 (Bloom)", duration: 45, phase: 'Flavor' });
-                steps.push({ weight: s2, cumulative: s1 + s2, text: "注水 (Flavor)", duration: 45, phase: 'Flavor' });
+        let currentWeight = 15;
+        let recipeSteps = [];
 
-                const strengthCount = strength === 'strong' ? 3 : 2;
-                const perStep = phase2Water / strengthCount;
-                let currentCumulative = s1 + s2;
+        // 初始化
+        function init() {
+            updateCalculations();
+        }
 
-                for (let i = 0; i < strengthCount; i++) {
-                    currentCumulative += perStep;
-                    steps.push({ weight: perStep, cumulative: currentCumulative, text: `注水 (Strength ${i+1})`, duration: 45, phase: 'Strength' });
+        function adjustWeight(delta) {
+            currentWeight += delta;
+            if (currentWeight < 5) currentWeight = 5;
+            if (currentWeight > 100) currentWeight = 100;
+            document.getElementById('coffeeInput').value = currentWeight;
+            updateCalculations();
+        }
+
+        function manualInput() {
+            let val = parseInt(document.getElementById('coffeeInput').value);
+            if (isNaN(val) || val < 1) val = 15;
+            currentWeight = val;
+            updateCalculations();
+        }
+
+        function updateCalculations() {
+            // 計算各階段水量 (四捨五入取整)
+            const w1 = Math.round(currentWeight * RATIOS.step1);
+            const w2 = Math.round(currentWeight * RATIOS.step2);
+            const w3 = Math.round(currentWeight * RATIOS.step3);
+            const w4 = Math.round(currentWeight * RATIOS.step4);
+            const bypass = Math.round(currentWeight * RATIOS.bypass);
+            const total = w4 + bypass;
+
+            // 更新顯示
+            document.getElementById('totalWaterDisplay').innerText = total;
+
+            // 更新步驟數據
+            recipeSteps = [
+                { 
+                    time: 0, 
+                    title: "第 1 次注水", 
+                    desc: `注入 ${w1}g 熱水 (繞圈打濕)`, 
+                    speak: `開始沖煮。注入${w1}克熱水。` 
+                },
+                { 
+                    time: 25, 
+                    title: "第 2 次注水", 
+                    desc: `加水至 ${w2}g (本次注入${w2 - w1}g)`, 
+                    speak: `第二注。加水到${w2}克。` 
+                },
+                { 
+                    time: 80, 
+                    title: "第 3 次注水", 
+                    desc: `加水至 ${w3}g (本次注入${w3 - w2}g)`, 
+                    speak: `第三注。加水到${w3}克。` 
+                },
+                { 
+                    time: 150, 
+                    title: "第 4 次注水", 
+                    desc: `加水至 ${w4}g (本次注入${w4 - w3}g)`, 
+                    speak: `第四注。加水到${w4}克。這是最後一次萃取。` 
+                },
+                { 
+                    time: 180, 
+                    title: "等待流乾", 
+                    desc: "讓濾杯內的水完全流乾", 
+                    speak: "等待咖啡流乾。" 
+                },
+                { 
+                    time: 210, 
+                    title: "兌水稀釋", 
+                    desc: `直接往壺中加入 ${bypass}g 熱水`, 
+                    speak: `沖煮結束。請加入${bypass}克熱水稀釋。請享用。` 
                 }
-                return steps;
-            };
+            ];
 
-            const steps = getSteps();
-            const currentStep = steps[currentStepIndex];
+            renderSteps();
+        }
 
-            // Timer Metrics
-            const currentStepStartTime = steps.slice(0, currentStepIndex).reduce((acc, s) => acc + s.duration, 0);
-            const timeInCurrentStep = timer - currentStepStartTime;
-            const remainingTimeInStep = Math.max(0, currentStep.duration - timeInCurrentStep);
-            const progressPercent = Math.min(100, (timeInCurrentStep / currentStep.duration) * 100);
-            const nextCumulativeWater = currentStepIndex < steps.length - 1 
-                                        ? Math.round(steps[currentStepIndex + 1].cumulative) 
-                                        : Math.round(totalWater);
+        // --- 以下為計時器邏輯 (與舊版相同，微調UI交互) ---
 
-            // --- Effects (Audio/WakeLock/Timer) ---
-            
-            // Wake Lock
-            useEffect(() => {
-                const requestWakeLock = async () => {
-                    try {
-                        if ('wakeLock' in navigator) {
-                            wakeLockRef.current = await navigator.wakeLock.request('screen');
-                        }
-                    } catch (err) { console.warn('Wake Lock Error', err); }
-                };
-                const releaseWakeLock = async () => {
-                    if (wakeLockRef.current) await wakeLockRef.current.release();
-                    wakeLockRef.current = null;
-                };
+        let timerInterval;
+        let seconds = 0;
+        let isRunning = false;
+        const totalDuration = 220;
+        let wakeLock = null;
 
-                if (isBrewing || countdown !== null) requestWakeLock();
-                else releaseWakeLock();
+        const synth = window.speechSynthesis;
+        const mainBtn = document.getElementById('mainBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const stepsContainer = document.getElementById('stepsContainer');
+        const weightControl = document.getElementById('weightControl');
 
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible' && (isBrewing || countdown !== null)) requestWakeLock();
-                });
-                return () => releaseWakeLock();
-            }, [isBrewing, countdown]);
+        function renderSteps() {
+            stepsContainer.innerHTML = '';
+            recipeSteps.forEach((step, index) => {
+                const div = document.createElement('div');
+                div.id = `step-${index}`;
+                div.className = 'p-3 rounded-lg text-sm flex justify-between items-center step-pending transition-all duration-300';
+                div.innerHTML = `
+                    <div>
+                        <span class="font-bold block text-base">${step.title}</span>
+                        <span class="text-xs opacity-80">${step.desc}</span>
+                    </div>
+                    <span class="timer-font opacity-50">${formatTime(step.time)}</span>
+                `;
+                stepsContainer.appendChild(div);
+            });
+        }
 
-            // Audio
-            const playBeep = (type) => {
-                if (!soundEnabled) return;
-                if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-                
-                const ctx = audioCtxRef.current;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                const now = ctx.currentTime;
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
 
-                if (type === 'tick') {
-                    osc.frequency.setValueAtTime(600, now);
-                    gain.gain.setValueAtTime(0.05, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                    osc.start(now);
-                    osc.stop(now + 0.1);
-                } else if (type === 'start') {
-                    osc.frequency.setValueAtTime(880, now);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-                    osc.start(now);
-                    osc.stop(now + 1.2);
+        function updateDisplay() {
+            timerDisplay.innerText = formatTime(seconds);
+            const progress = Math.min((seconds / 210) * 100, 100);
+            document.getElementById('totalProgress').style.width = `${progress}%`;
+
+            let activeIndex = -1;
+            for (let i = recipeSteps.length - 1; i >= 0; i--) {
+                if (seconds >= recipeSteps[i].time) {
+                    activeIndex = i;
+                    break;
                 }
-            };
+            }
 
-            // Countdown Logic
-            useEffect(() => {
-                if (countdown === null) return;
-                if (countdown > 0) {
-                    playBeep('tick');
-                    const timerId = setTimeout(() => setCountdown(prev => prev - 1), 1000);
-                    return () => clearTimeout(timerId);
+            if (activeIndex !== -1) {
+                const step = recipeSteps[activeIndex];
+                document.getElementById('currentStepTitle').innerText = step.title;
+                document.getElementById('currentStepDesc').innerText = step.desc;
+                if (seconds === step.time) speak(step.speak);
+            }
+
+            recipeSteps.forEach((step, index) => {
+                const el = document.getElementById(`step-${index}`);
+                if (index < activeIndex) {
+                    el.className = 'p-3 rounded-lg text-sm flex justify-between items-center step-done bg-stone-800/30';
+                } else if (index === activeIndex) {
+                    el.className = 'p-3 rounded-lg text-sm flex justify-between items-center step-active bg-stone-800';
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 } else {
-                    playBeep('start');
-                    const startDelay = setTimeout(() => {
-                        setCountdown(null);
-                        setTimer(GO_SCREEN_HOLD_DURATION_MS / 1000);
-                        setCurrentStepIndex(0);
-                        setIsBrewing(true);
-                    }, GO_SCREEN_HOLD_DURATION_MS);
-                    return () => clearTimeout(startDelay);
+                    el.className = 'p-3 rounded-lg text-sm flex justify-between items-center step-pending';
                 }
-            }, [countdown]);
+            });
 
-            // Brewing Logic
-            useEffect(() => {
-                if (isBrewing) {
-                    intervalRef.current = setInterval(() => setTimer(prev => prev + 1), 1000);
-                } else clearInterval(intervalRef.current);
-                return () => clearInterval(intervalRef.current);
-            }, [isBrewing]);
+            if (seconds >= totalDuration) {
+                pauseTimer();
+                mainBtn.innerHTML = '<i class="fas fa-check mr-2"></i> 完成';
+                mainBtn.classList.remove('btn-primary');
+                mainBtn.classList.add('bg-green-600', 'text-white');
+            }
+        }
 
-            // Step Transitions
-            useEffect(() => {
-                if (!isBrewing) return;
-                let timeAccumulated = 0;
-                for (let i = 0; i < currentStepIndex; i++) timeAccumulated += steps[i].duration;
-                const stepEndTime = timeAccumulated + currentStep.duration;
+        function toggleTimer() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
 
-                if (timer > 0) {
-                    const timeRemaining = stepEndTime - timer;
-                    if (timeRemaining <= 3 && timeRemaining >= 1) playBeep('tick');
-                }
-                if (timer > 0 && timer === stepEndTime) playBeep('start');
+        async function startTimer() {
+            if ('wakeLock' in navigator) {
+                try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+            }
+            if (seconds === 0) speak(" "); 
 
-                if (timer >= stepEndTime) {
-                    if (currentStepIndex < steps.length - 1) setCurrentStepIndex(prev => prev + 1);
-                    else setIsBrewing(false);
-                }
-            }, [timer, isBrewing, currentStepIndex, steps]);
+            // Disable Inputs
+            weightControl.classList.add('control-disabled');
+            document.getElementById('coffeeInput').disabled = true;
 
-            // Handlers
-            const handleStart = () => {
-                if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-                else if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
-                setCountdown(3);
-            };
-            const handleReset = () => { setIsBrewing(false); setTimer(0); setCurrentStepIndex(0); setCountdown(null); };
-            const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+            isRunning = true;
+            mainBtn.innerHTML = '<i class="fas fa-pause mr-2"></i> 暫停';
+            mainBtn.classList.remove('btn-primary');
+            mainBtn.classList.add('bg-stone-600', 'text-white');
+            resetBtn.classList.remove('hidden');
+
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateDisplay();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            mainBtn.innerHTML = '<i class="fas fa-play mr-2"></i> 繼續';
+            mainBtn.classList.add('btn-primary');
+            mainBtn.classList.remove('bg-stone-600', 'text-white', 'bg-green-600');
+            if (wakeLock) { wakeLock.release().then(() => wakeLock = null); }
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            seconds = 0;
+            updateDisplay();
             
-            const handleBeansSubmit = () => {
-                let val = Number(tempBeans);
-                if (!isNaN(val) && val >= 10 && val <= 40) setBeans(Math.round(val));
-                setIsEditingBeans(false);
-            };
+            // Re-enable Inputs
+            weightControl.classList.remove('control-disabled');
+            document.getElementById('coffeeInput').disabled = false;
 
+            document.getElementById('currentStepTitle').innerText = "準備開始";
+            document.getElementById('currentStepDesc').innerText = "請確認水量與溫度";
+            document.getElementById('totalProgress').style.width = '0%';
+            mainBtn.innerHTML = '<i class="fas fa-play mr-2"></i> 開始沖煮';
+            resetBtn.classList.add('hidden');
+            renderSteps();
+        }
 
-            // --- UI RENDERERS ---
+        function speak(text) {
+            if (!text) return;
+            synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-TW';
+            utterance.rate = 1; 
+            synth.speak(utterance);
+        }
 
-            // 1. Countdown View
-            if (countdown !== null) {
-                return (
-                    <div className="h-screen w-full flex flex-col items-center justify-center relative overflow-hidden">
-                        <BackgroundEffect color={countdown === 0 ? "bg-amber-500" : "bg-cyan-500"} />
-                        <div className="relative z-10 flex flex-col items-center">
-                            <h1 className={`text-[12rem] font-extralight tracking-tighter leading-none transition-all duration-300 transform scale-100 ${countdown === 0 ? 'scale-110 text-white text-glow' : 'text-white/90'}`}>
-                                {countdown === 0 ? "GO" : countdown}
-                            </h1>
-                            <p className="text-xl tracking-[0.5em] uppercase text-white/60 mt-4 animate-pulse">
-                                {countdown === 0 ? "START BREWING" : "READY"}
-                            </p>
-                        </div>
-                    </div>
-                );
-            }
-
-            // 2. Setup View
-            if (!isBrewing && timer === 0) {
-                return (
-                    <div className="h-screen w-full flex flex-col relative overflow-hidden">
-                        <BackgroundEffect color="bg-amber-800" />
-                        
-                        {/* Header */}
-                        <header className="pt-14 pb-4 px-6 flex justify-between items-center z-10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
-                                    <Coffee size={20} className="text-amber-400" />
-                                </div>
-                                <div>
-                                    <h1 className="text-xl font-medium tracking-wide">4:6 Method</h1>
-                                    <p className="text-xs text-white/40 uppercase tracking-widest">Tetsu Kasuya</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setSoundEnabled(!soundEnabled)} className="w-10 h-10 rounded-full glass-button flex items-center justify-center">
-                                {soundEnabled ? <Volume2 size={18} className="text-white/80"/> : <VolumeX size={18} className="text-white/40"/>}
-                            </button>
-                        </header>
-
-                        <main className="flex-1 overflow-y-auto px-6 pb-32 z-10 space-y-6 pt-4">
-                            
-                            {/* Hero Bean Input */}
-                            <section className="glass-panel rounded-[2rem] p-8 text-center relative overflow-hidden group">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
-                                <h2 className="text-sm uppercase tracking-widest text-amber-500/80 mb-6 font-medium">Coffee Beans</h2>
-                                
-                                <div className="relative h-32 flex items-center justify-center">
-                                    {isEditingBeans ? (
-                                        <div className="flex items-baseline">
-                                            <input
-                                                ref={beansInputRef}
-                                                type="number"
-                                                value={tempBeans}
-                                                onChange={(e) => setTempBeans(e.target.value)}
-                                                onBlur={handleBeansSubmit}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleBeansSubmit()}
-                                                autoFocus
-                                                className="w-40 bg-transparent text-center text-8xl font-thin text-white outline-none border-b border-amber-500/50"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div onClick={() => { setIsEditingBeans(true); setTempBeans(beans); }} className="cursor-pointer transition-transform active:scale-95">
-                                            <span className="text-8xl font-thin text-white text-glow">{beans}</span>
-                                            <span className="text-2xl text-white/40 font-light ml-2">g</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="mt-6 px-4">
-                                    <input 
-                                        type="range" min="10" max="40" step="1" 
-                                        value={beans} 
-                                        onChange={(e) => setBeans(Number(e.target.value))} 
-                                        className="accent-amber-500"
-                                    />
-                                    <div className="flex justify-between text-xs text-white/30 mt-3 font-mono">
-                                        <span>10g</span>
-                                        <span>TARGET: {Math.round(totalWater)}ml</span>
-                                        <span>40g</span>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Flavor Profile */}
-                            <section className="space-y-3">
-                                <label className="flex items-center gap-2 text-sm text-white/60 ml-2">
-                                    <Droplets size={14} /> Flavor (Phase 1)
-                                </label>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {[{id: 'sweet', label: 'Sweet', sub: '少酸'}, {id: 'balanced', label: 'Balance', sub: '平衡'}, {id: 'acidic', label: 'Acidity', sub: '明亮'}].map(opt => (
-                                        <button 
-                                            key={opt.id} 
-                                            onClick={() => setFlavor(opt.id)}
-                                            className={`glass-button rounded-2xl py-4 flex flex-col items-center justify-center gap-1 ${flavor === opt.id ? 'active' : ''}`}
-                                        >
-                                            <span className="text-sm font-medium">{opt.label}</span>
-                                            <span className="text-[10px] opacity-60 scale-90">{opt.sub}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </section>
-
-                            {/* Strength Profile */}
-                            <section className="space-y-3">
-                                <label className="flex items-center gap-2 text-sm text-white/60 ml-2">
-                                    <Timer size={14} /> Strength (Phase 2)
-                                </label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {[{id: 'standard', label: 'Standard', desc: '2 Pours'}, {id: 'strong', label: 'Strong', desc: '3 Pours'}].map(opt => (
-                                        <button 
-                                            key={opt.id} 
-                                            onClick={() => setStrength(opt.id)}
-                                            className={`glass-button rounded-2xl py-4 flex flex-col items-center justify-center gap-1 ${strength === opt.id ? 'active' : ''}`}
-                                        >
-                                            <span className="text-sm font-medium">{opt.label}</span>
-                                            <span className="text-[10px] opacity-60 scale-90">{opt.desc}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </section>
-
-                        </main>
-
-                        {/* Floating Action Button */}
-                        <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20">
-                            <button 
-                                onClick={handleStart}
-                                className="group relative px-10 py-5 bg-white text-black rounded-full flex items-center gap-3 shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform duration-300"
-                            >
-                                <div className="absolute inset-0 rounded-full bg-white blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                                <Play size={24} fill="black" />
-                                <span className="text-lg font-bold tracking-wide relative z-10">START BREW</span>
-                            </button>
-                        </div>
-                    </div>
-                );
-            }
-
-            // 3. Active Brewing / Finished View
-            const isFinished = !isBrewing && timer > 0;
-
-            return (
-                <div className="h-screen w-full flex flex-col relative overflow-hidden">
-                    <BackgroundEffect color={isFinished ? "bg-green-600" : "bg-amber-900"} />
-                    
-                    {/* Top Bar */}
-                    <header className="pt-14 pb-2 px-6 flex justify-between items-center z-10">
-                        <button onClick={handleReset} className="w-10 h-10 rounded-full glass-button flex items-center justify-center text-white/60 hover:text-white">
-                            {isFinished ? <X size={20}/> : <RotateCcw size={18} />}
-                        </button>
-                        <div className="font-mono text-xl tracking-widest text-white/80 tabular-nums">
-                            {formatTime(timer)}
-                        </div>
-                        <button onClick={() => setSoundEnabled(!soundEnabled)} className="w-10 h-10 rounded-full glass-button flex items-center justify-center text-white/60">
-                            {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-                        </button>
-                    </header>
-
-                    <main className="flex-1 z-10 flex flex-col relative">
-                        
-                        {isFinished ? (
-                            // Finished State
-                            <div className="flex-1 flex flex-col items-center justify-center p-8 animate-[float-slow_4s_infinite]">
-                                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-green-400 to-emerald-600 flex items-center justify-center shadow-[0_0_50px_rgba(52,211,153,0.4)] mb-8">
-                                    <Coffee size={40} className="text-white" />
-                                </div>
-                                <h2 className="text-4xl font-light text-white mb-2">Enjoy</h2>
-                                <p className="text-white/50 tracking-widest uppercase text-sm mb-12">Brew Completed</p>
-                                
-                                <div className="glass-panel px-10 py-6 rounded-3xl text-center">
-                                    <span className="block text-xs text-white/40 uppercase tracking-widest mb-2">Total Water</span>
-                                    <span className="text-5xl font-thin text-white">{Math.round(totalWater)}<span className="text-lg text-white/40 ml-1">ml</span></span>
-                                </div>
-                                
-                                <button onClick={handleReset} className="mt-12 text-white/60 text-sm hover:text-white transition-colors uppercase tracking-widest border-b border-transparent hover:border-white/40 pb-1">
-                                    Brew Again
-                                </button>
-                            </div>
-                        ) : (
-                            // Brewing State
-                            <>
-                                {/* Main Display */}
-                                <div className="flex-1 flex flex-col items-center justify-center -mt-10">
-                                    <p className="text-amber-500/80 text-xs font-bold uppercase tracking-[0.3em] mb-4 animate-pulse">
-                                        Target Weight
-                                    </p>
-                                    <div className="relative">
-                                        <h1 className="text-[7rem] font-thin leading-none text-white text-glow tabular-nums tracking-tighter">
-                                            {Math.round(currentStep.cumulative)}
-                                        </h1>
-                                        <span className="absolute -right-6 top-4 text-2xl text-white/30 font-light">g</span>
-                                    </div>
-                                    
-                                    {/* Progress Bar */}
-                                    <div className="w-64 h-1.5 bg-white/10 rounded-full mt-10 overflow-hidden relative">
-                                        <div 
-                                            className="absolute top-0 left-0 h-full bg-amber-500 shadow-[0_0_15px_#f59e0b] transition-all duration-1000 ease-linear"
-                                            style={{ width: `${progressPercent}%` }}
-                                        />
-                                    </div>
-                                    <div className="mt-4 flex items-center gap-2 text-white/40 font-mono text-xs">
-                                        <span>Step Time</span>
-                                        <span className="text-amber-400 font-bold">{remainingTimeInStep}s</span>
-                                        <span>/ {currentStep.duration}s</span>
-                                    </div>
-                                </div>
-
-                                {/* Step Deck (Bottom) */}
-                                <div className="h-[35vh] w-full glass-panel rounded-t-[2.5rem] border-b-0 p-6 overflow-hidden relative">
-                                    <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-white/10 rounded-full"></div>
-                                    <h3 className="text-xs text-white/30 uppercase tracking-widest mb-4 ml-2">Timeline</h3>
-                                    
-                                    <div className="space-y-3 overflow-y-auto h-full pb-20 no-scrollbar mask-gradient">
-                                        {steps.map((step, idx) => (
-                                            <div 
-                                                key={idx}
-                                                className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-500 ${
-                                                    idx === currentStepIndex 
-                                                        ? 'bg-white/10 border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)] translate-x-2' 
-                                                        : idx < currentStepIndex 
-                                                            ? 'opacity-30 grayscale' 
-                                                            : 'opacity-50'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${
-                                                        idx === currentStepIndex ? 'border-amber-500 text-amber-500 bg-amber-500/10' : 'border-white/20 text-white/40'
-                                                    }`}>
-                                                        {idx + 1}
-                                                    </div>
-                                                    <div>
-                                                        <div className={`text-sm font-medium ${idx === currentStepIndex ? 'text-white' : 'text-white/60'}`}>
-                                                            {step.text.split('(')[0]}
-                                                        </div>
-                                                        <div className="text-[10px] text-white/30 uppercase tracking-wider">
-                                                            {step.text.split('(')[1]?.replace(')', '') || 'Pour'}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="text-lg font-light text-white tabular-nums">
-                                                        {Math.round(step.cumulative)}<span className="text-xs text-white/30 ml-0.5">g</span>
-                                                    </div>
-                                                    <div className="text-[10px] text-white/30">
-                                                        +{Math.round(step.weight)}g
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </main>
-                </div>
-            );
-        };
-
-        // --- Background Component for the Aurora Effect ---
-        const BackgroundEffect = ({ color }) => {
-            return (
-                <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                    <div className={`absolute top-[-20%] left-[-20%] w-[90%] h-[60%] ${color} opacity-20 blur-[100px] rounded-full animate-blob mix-blend-screen`}></div>
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[80%] h-[60%] bg-blue-900 opacity-20 blur-[120px] rounded-full animate-blob mix-blend-screen" style={{animationDelay: '2s'}}></div>
-                    <div className="absolute top-[40%] left-[20%] w-[40%] h-[40%] bg-purple-900 opacity-10 blur-[80px] rounded-full animate-blob" style={{animationDelay: '4s'}}></div>
-                    {/* Noise Texture */}
-                    <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")'}}></div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        init();
     </script>
 </body>
 </html>
+
+
