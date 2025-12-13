@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="4:6 Brew">
     <meta name="theme-color" content="#000000">
 
-    <!-- Cache Control: Attempt to force refresh on open -->
+    <!-- Cache Control -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -35,7 +35,6 @@
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
-            /* Use dynamic viewport height to fix bottom cropping on iOS */
             height: 100vh;
             height: 100dvh; 
             width: 100vw;
@@ -590,26 +589,31 @@
                 return (
                     <div className="h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-black">
                         <BackgroundEffect color={countdown === 0 ? "bg-amber-500" : "bg-cyan-500"} />
-                        <div className="relative z-10 h-full w-full flex flex-col items-center justify-center">
-                            
-                            {/* Main Visual (Number) and Status */}
-                            <div className="flex flex-col items-center justify-center">
-                                {/* Big Number */}
-                                <h1 className={`text-[12rem] font-extralight leading-none transition-all duration-300 tabular-nums text-center w-full ${countdown === 0 ? 'scale-110 text-white text-glow' : 'text-white/90'}`}>
-                                    {countdown === 0 ? "GO" : countdown}
-                                </h1>
-                                
-                                {/* Status Text - Fixed Height for alignment */}
-                                <div className="mt-2 mb-4 h-7 flex items-center justify-center">
-                                    <p className="text-xl tracking-[0.5em] uppercase text-white/60 animate-pulse whitespace-nowrap text-center">
-                                        {countdown === 0 ? "START BREW" : "READY"}
-                                    </p>
-                                </div>
+                        
+                        {/* UNIFIED LAYOUT: Visual Center */}
+                        {/* Fixed position for the Main Visual (Number) */}
+                        {/* Centered at top 40% of screen to leave room below */}
+                        <div className="absolute top-[40%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
+                             <h1 className={`text-[12rem] font-extralight leading-none transition-all duration-300 tabular-nums text-center w-full ${countdown === 0 ? 'scale-110 text-white text-glow' : 'text-white/90'}`}>
+                                {countdown === 0 ? "GO" : countdown}
+                            </h1>
+                        </div>
 
-                                {/* Target Weight - Directly below "READY" */}
-                                <div className="mt-2">
-                                    <TargetWeightDisplay value={Math.round(steps[0].cumulative)} />
-                                </div>
+                        {/* UNIFIED LAYOUT: Data Cluster */}
+                        {/* Fixed position starting at top 58% of screen */}
+                        {/* Guaranteed alignment for "READY" and "Target Weight" */}
+                        <div className="absolute top-[58%] left-0 right-0 flex flex-col items-center">
+                            
+                            {/* Status Text (Placeholder height matching Brewing Spacer) */}
+                             <div className="mb-4 h-7 flex items-center justify-center">
+                                <p className="text-xl tracking-[0.5em] uppercase text-white/60 animate-pulse whitespace-nowrap text-center">
+                                    {countdown === 0 ? "START BREW" : "READY"}
+                                </p>
+                            </div>
+
+                            {/* Target Weight */}
+                            <div>
+                                <TargetWeightDisplay value={Math.round(steps[0].cumulative)} />
                             </div>
                         </div>
                     </div>
@@ -794,22 +798,19 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.41</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.43</p>
                             </div>
 
                         </main>
 
-                        {/* UPDATED v2.39: Changed black opacity to 80% */}
-                        <div className="absolute bottom-0 left-0 right-0 flex justify-center z-20 pb-[env(safe-area-inset-bottom)] bg-gradient-to-t from-black/80 via-black/80 via-70% to-transparent pt-12">
-                            <div className="pb-8">
-                                <button 
-                                    onClick={handleStart}
-                                    className="px-10 py-5 bg-amber-900/20 text-amber-500 rounded-full flex items-center gap-3 shadow-[0_0_40px_rgba(245,158,11,0.15)] border border-amber-500/50 backdrop-blur-xl active:scale-95 transition-all duration-200 hover:bg-amber-900/40 hover:text-amber-400"
-                                >
-                                    <Play size={24} className="fill-amber-500" />
-                                    <span className="text-lg font-bold tracking-wide">START BREW</span>
-                                </button>
-                            </div>
+                        <div className="absolute bottom-0 left-0 right-0 flex justify-center z-20 bg-gradient-to-t from-black/80 via-black/80 via-60% to-transparent pt-24 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+                             <button 
+                                onClick={handleStart}
+                                className="px-10 py-5 bg-amber-900/20 text-amber-500 rounded-full flex items-center gap-3 shadow-[0_0_40px_rgba(245,158,11,0.15)] border border-amber-500/50 backdrop-blur-xl active:scale-95 transition-all duration-200 hover:bg-amber-900/40 hover:text-amber-400"
+                            >
+                                <Play size={24} className="fill-amber-500" />
+                                <span className="text-lg font-bold tracking-wide">START BREW</span>
+                            </button>
                         </div>
                     </div>
                 );
@@ -859,18 +860,17 @@
                                 </button>
                             </div>
                         ) : (
-                            // Brewing State - MINIMALIST ZEN MODE (v2.41 - Visual Compensation)
-                            // Added -mt-10 to lift the content up, compensating for the taller Timer element
-                            <div className="flex flex-col items-center justify-center -mt-10">
-                                
-                                {/* 1. Timer (Replaces Countdown Number) */}
-                                <div className="relative mb-2">
-                                    <SegmentedTimer 
+                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.43)
+                            // Using identical container structure as Countdown screen to guarantee pixel-perfect alignment
+                            <>
+                                {/* 1. Main Visual (Timer) - Fixed Center Position */}
+                                <div className="absolute top-[40%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
+                                     <SegmentedTimer 
                                         steps={steps}
                                         currentStepIndex={currentStepIndex}
                                         remainingTimeInStep={remainingTimeInStep} 
                                         currentStepDuration={currentStep.duration}
-                                        size={window.innerWidth < 380 ? 240 : 280} // Responsive size
+                                        size={window.innerWidth < 380 ? 240 : 280}
                                     >
                                         <div className="flex flex-col items-center">
                                             <h1 className="text-9xl font-thin tabular-nums text-white text-glow leading-none tracking-tighter">
@@ -881,29 +881,35 @@
                                     </SegmentedTimer>
                                 </div>
 
-                                {/* Spacer matches Countdown "READY" text block height */}
-                                <div className="mt-2 mb-4 h-7 w-1"></div>
-
-                                {/* 2. Target Weight (SECONDARY) - Matched Position */}
-                                <div className="flex flex-col items-center justify-center z-30 mt-2">
-                                    <TargetWeightDisplay value={Math.round(currentStep.cumulative)} />
+                                {/* 2. Data Cluster - Fixed Start Position */}
+                                <div className="absolute top-[58%] left-0 right-0 flex flex-col items-center">
                                     
-                                    {/* Next Target Hint */}
-                                    {nextCumulativeWater && (
-                                        <div className="mt-4 flex justify-center animate-in fade-in slide-in-from-bottom-2 absolute top-full pt-4">
-                                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 backdrop-blur-sm">
-                                                <span className="text-white/40 text-[10px] uppercase tracking-wider mr-2">Next</span>
-                                                <span className="text-white/80 text-sm font-mono">{nextCumulativeWater}g</span>
+                                    {/* Invisible Spacer (Matches 'READY' height) */}
+                                    <div className="mb-4 h-7 w-1"></div>
+
+                                    {/* Target Weight Display */}
+                                    <div className="flex flex-col items-center justify-center z-30">
+                                        <TargetWeightDisplay value={Math.round(currentStep.cumulative)} />
+                                        
+                                        {/* Next Target Hint */}
+                                        {nextCumulativeWater && (
+                                            <div className="mt-4 flex justify-center animate-in fade-in slide-in-from-bottom-2 absolute top-full pt-4">
+                                                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 backdrop-blur-sm">
+                                                    <span className="text-white/40 text-[10px] uppercase tracking-wider mr-2">Next</span>
+                                                    <span className="text-white/80 text-sm font-mono">{nextCumulativeWater}g</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
+                                    
+                                    {/* Step Counter (Relative to Data Cluster now?) No, keep absolute bottom */}
                                 </div>
-                                
-                                {/* Step Counter (Footer) */}
+
+                                {/* Step Counter (Footer) - Kept independent */}
                                 <div className="absolute bottom-10 left-0 right-0 flex justify-center text-white/30 font-mono text-xs tracking-widest uppercase">
                                     STEP {currentStepIndex + 1} / {steps.length}
                                 </div>
-                            </div>
+                            </>
                         )}
                     </main>
                 </div>
