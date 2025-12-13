@@ -591,8 +591,7 @@
                         <BackgroundEffect color={countdown === 0 ? "bg-amber-500" : "bg-cyan-500"} />
                         
                         {/* UNIFIED LAYOUT: Visual Center */}
-                        {/* Fixed position for the Main Visual (Number) */}
-                        {/* Centered at top 35% of screen (LIFTED UP) */}
+                        {/* Centered at top 35% of screen (Lifted Up) */}
                         <div className="absolute top-[35%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
                              <h1 className={`text-[12rem] font-extralight leading-none transition-all duration-300 tabular-nums text-center w-full ${countdown === 0 ? 'scale-110 text-white text-glow' : 'text-white/90'}`}>
                                 {countdown === 0 ? "GO" : countdown}
@@ -600,12 +599,11 @@
                         </div>
 
                         {/* UNIFIED LAYOUT: Data Cluster */}
-                        {/* Fixed position starting at top 50% of screen (LIFTED UP & CLOSER) */}
-                        {/* Guaranteed alignment for "READY" and "Target Weight" */}
-                        <div className="absolute top-[50%] left-0 right-0 flex flex-col items-center">
+                        {/* Fixed position starting at top 45% (Moved UP from 48%) */}
+                        <div className="absolute top-[45%] left-0 right-0 flex flex-col items-center">
                             
-                            {/* Status Text (Placeholder height matching Brewing Spacer) */}
-                             <div className="mb-4 h-7 flex items-center justify-center">
+                            {/* Status Text (INCREASED SPACING: mb-9 to push Target Weight back down) */}
+                             <div className="mb-9 h-7 flex items-center justify-center">
                                 <p className="text-xl tracking-[0.5em] uppercase text-white/60 animate-pulse whitespace-nowrap text-center">
                                     {countdown === 0 ? "START BREW" : "READY"}
                                 </p>
@@ -641,7 +639,7 @@
                             </button>
                         </header>
 
-                        <main className="flex-1 overflow-y-auto px-6 pb-40 z-10 space-y-6 pt-4 no-scrollbar">
+                        <main className="flex-1 overflow-y-auto px-6 pb-48 z-10 space-y-6 pt-4 no-scrollbar">
                             
                             {/* Setup Controls (Beans, Ratio, Flavor, Strength) */}
                             <section className="glass-panel rounded-[2rem] p-8 text-center relative overflow-hidden group">
@@ -798,12 +796,13 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.44</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.46</p>
                             </div>
 
                         </main>
 
-                        <div className="absolute bottom-0 left-0 right-0 flex justify-center z-20 bg-gradient-to-t from-black/80 via-black/80 via-60% to-transparent pt-24 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+                        {/* UPDATED v2.45: Significantly increased bottom padding to prevent cropping and lift button */}
+                        <div className="absolute bottom-0 left-0 right-0 flex justify-center z-20 bg-gradient-to-t from-black/80 via-black/80 via-60% to-transparent pt-24 pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
                              <button 
                                 onClick={handleStart}
                                 className="px-10 py-5 bg-amber-900/20 text-amber-500 rounded-full flex items-center gap-3 shadow-[0_0_40px_rgba(245,158,11,0.15)] border border-amber-500/50 backdrop-blur-xl active:scale-95 transition-all duration-200 hover:bg-amber-900/40 hover:text-amber-400"
@@ -860,11 +859,10 @@
                                 </button>
                             </div>
                         ) : (
-                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.44)
-                            // Using identical container structure as Countdown screen to guarantee pixel-perfect alignment
+                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.46)
                             <>
                                 {/* 1. Main Visual (Timer) - Fixed Center Position */}
-                                {/* Centered at top 35% of screen (LIFTED UP to match new Countdown center) */}
+                                {/* Centered at top 35% of screen */}
                                 <div className="absolute top-[35%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
                                      <SegmentedTimer 
                                         steps={steps}
@@ -883,12 +881,11 @@
                                 </div>
 
                                 {/* 2. Data Cluster - Fixed Start Position */}
-                                {/* Fixed position starting at top 50% of screen (Matches new Countdown anchor) */}
-                                <div className="absolute top-[50%] left-0 right-0 flex flex-col items-center">
+                                {/* Fixed position starting at top 45% (Moved UP from 48%) */}
+                                <div className="absolute top-[45%] left-0 right-0 flex flex-col items-center">
                                     
-                                    {/* Invisible Spacer (Matches 'READY' height) */}
-                                    {/* Overlaps the bottom of the circle slightly, which is fine as it's invisible */}
-                                    <div className="mb-4 h-7 w-1"></div>
+                                    {/* Invisible Spacer (Matches 'READY' height) - Reduced margin mb-9 */}
+                                    <div className="mb-9 h-7 w-1"></div>
 
                                     {/* Target Weight Display */}
                                     <div className="flex flex-col items-center justify-center z-30">
