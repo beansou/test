@@ -600,10 +600,6 @@
                                 </h1>
                                 
                                 {/* Status Text - Fixed Height for alignment */}
-                                {/* "READY" is text-xl (20px) with line-height 28px. 
-                                    Margins: mt-2 (8px), mb-4 (16px).
-                                    Total Block Height = 8 + 28 + 16 = 52px (excluding bottom mt-2 for next element)
-                                */}
                                 <div className="mt-2 mb-4 h-7 flex items-center justify-center">
                                     <p className="text-xl tracking-[0.5em] uppercase text-white/60 animate-pulse whitespace-nowrap text-center">
                                         {countdown === 0 ? "START BREW" : "READY"}
@@ -703,7 +699,6 @@
                                 </div>
                             </section>
 
-                            {/* UPDATED v2.38: Removed Chinese subtitles */}
                             <section className="space-y-3">
                                 <label className="flex items-center gap-2 text-sm text-white/60 ml-2">
                                     <Coffee size={14} /> Flavor (Phase 1)
@@ -799,7 +794,7 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.40</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.41</p>
                             </div>
 
                         </main>
@@ -864,11 +859,12 @@
                                 </button>
                             </div>
                         ) : (
-                            // Brewing State - MINIMALIST ZEN MODE (v2.38 - Unified Center Layout)
-                            <div className="flex flex-col items-center justify-center">
+                            // Brewing State - MINIMALIST ZEN MODE (v2.41 - Visual Compensation)
+                            // Added -mt-10 to lift the content up, compensating for the taller Timer element
+                            <div className="flex flex-col items-center justify-center -mt-10">
                                 
                                 {/* 1. Timer (Replaces Countdown Number) */}
-                                <div className="relative mb-6">
+                                <div className="relative mb-2">
                                     <SegmentedTimer 
                                         steps={steps}
                                         currentStepIndex={currentStepIndex}
@@ -885,10 +881,7 @@
                                     </SegmentedTimer>
                                 </div>
 
-                                {/* UPDATED v2.38: Perfect Spacer to prevent jumping */}
-                                {/* Matches Countdown's "READY" text block height exactly: 
-                                    mt-2 (8px) + mb-4 (16px) + h-7 (28px) = Total 52px gap visual equivalent 
-                                */}
+                                {/* Spacer matches Countdown "READY" text block height */}
                                 <div className="mt-2 mb-4 h-7 w-1"></div>
 
                                 {/* 2. Target Weight (SECONDARY) - Matched Position */}
