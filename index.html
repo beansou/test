@@ -516,12 +516,13 @@
             };
 
             // Helper Component for Target Weight (Shared)
+            // UPDATED: Reverted to Standard Centering (Block Center)
             const TargetWeightDisplay = ({ value }) => (
                 <div className="flex flex-col items-center gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <p className="text-amber-500/80 text-xs font-bold uppercase tracking-[0.3em] mb-2 text-shadow-sm">
                         Target Weight
                     </p>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex items-baseline justify-center gap-2">
                         <span className="text-6xl font-light text-white text-glow">{value}</span>
                         <span className="text-2xl text-white/40 font-light">g</span>
                     </div>
@@ -573,8 +574,17 @@
                         
                         <header className="pt-14 pb-4 px-6 flex justify-between items-center z-10">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
-                                    <Coffee size={20} className="text-amber-400" />
+                                {/* LOGO UPDATE: Replaced Coffee icon with user image */}
+                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 overflow-hidden relative">
+                                    {/* Fallback Icon (Behind image) */}
+                                    <Coffee size={20} className="text-amber-400 absolute z-0" />
+                                    {/* User Logo Image */}
+                                    <img 
+                                        src="my_coffee_logo.png" 
+                                        alt="Logo" 
+                                        className="w-full h-full object-cover relative z-10"
+                                        onError={(e) => e.target.style.display = 'none'}
+                                    />
                                 </div>
                                 <div>
                                     <h1 className="text-xl font-medium tracking-wide">4:6 Method</h1>
@@ -743,13 +753,13 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.49</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.52</p>
                             </div>
 
                         </main>
 
-                        {/* BOTTOM BUTTON: Using v2.20 style "absolute bottom-12" to avoid safe-area issues */}
-                        <div className="absolute bottom-12 left-0 right-0 flex justify-center z-20">
+                        {/* BOTTOM BUTTON: With Gradient Cover */}
+                        <div className="absolute bottom-0 left-0 right-0 flex justify-center z-20 bg-gradient-to-t from-black/80 via-black/80 via-40% to-transparent pt-32 pb-12">
                              <button 
                                 onClick={handleStart}
                                 className="px-10 py-5 bg-amber-900/20 text-amber-500 rounded-full flex items-center gap-3 shadow-[0_0_40px_rgba(245,158,11,0.15)] border border-amber-500/50 backdrop-blur-xl active:scale-95 transition-all duration-200 hover:bg-amber-900/40 hover:text-amber-400"
@@ -806,7 +816,7 @@
                                 </button>
                             </div>
                         ) : (
-                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.49)
+                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.52)
                             // Following v2.20 container structure but v2.47 content
                             <>
                                 {/* 1. Main Visual (Timer) - Fixed Center Position */}
