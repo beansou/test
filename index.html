@@ -11,6 +11,11 @@
     <meta name="apple-mobile-web-app-title" content="4:6 Brew">
     <meta name="theme-color" content="#000000">
 
+    <!-- Cache Control: Attempt to force refresh on open -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <!-- Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -794,14 +799,13 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.38</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.40</p>
                             </div>
 
                         </main>
 
-                        {/* UPDATED v2.38: Added Gradient Cover behind the button container */}
-                        {/* The gradient fades from black (bottom) to transparent (top) to mask scrolling content smoothly */}
-                        <div className="absolute bottom-0 left-0 right-0 flex justify-center z-20 pb-[env(safe-area-inset-bottom)] bg-gradient-to-t from-black via-black via-70% to-transparent pt-12">
+                        {/* UPDATED v2.39: Changed black opacity to 80% */}
+                        <div className="absolute bottom-0 left-0 right-0 flex justify-center z-20 pb-[env(safe-area-inset-bottom)] bg-gradient-to-t from-black/80 via-black/80 via-70% to-transparent pt-12">
                             <div className="pb-8">
                                 <button 
                                     onClick={handleStart}
