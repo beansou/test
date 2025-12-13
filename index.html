@@ -546,8 +546,8 @@
                         </div>
 
                         {/* UNIFIED LAYOUT: Data Cluster */}
-                        {/* Fixed position starting at top 49% (Moved DOWN from 47%) */}
-                        <div className="absolute top-[49%] left-0 right-0 flex flex-col items-center">
+                        {/* Fixed position starting at top 47% (Reverted from 49%) */}
+                        <div className="absolute top-[47%] left-0 right-0 flex flex-col items-center">
                             
                             {/* Status Text (Spacing buffer mb-9) */}
                              <div className="mb-9 h-7 flex items-center justify-center">
@@ -743,7 +743,7 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.48</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.49</p>
                             </div>
 
                         </main>
@@ -806,7 +806,7 @@
                                 </button>
                             </div>
                         ) : (
-                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.48)
+                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.49)
                             // Following v2.20 container structure but v2.47 content
                             <>
                                 {/* 1. Main Visual (Timer) - Fixed Center Position */}
@@ -829,8 +829,8 @@
                                 </div>
 
                                 {/* 2. Data Cluster - Fixed Start Position */}
-                                {/* Fixed position starting at top 49% (Moved DOWN from 47%) */}
-                                <div className="absolute top-[49%] left-0 right-0 flex flex-col items-center">
+                                {/* Fixed position starting at top 47% (Reverted from 49%) */}
+                                <div className="absolute top-[47%] left-0 right-0 flex flex-col items-center">
                                     
                                     {/* Invisible Spacer (Matches 'READY' height) - mb-9 */}
                                     <div className="mb-9 h-7 w-1"></div>
