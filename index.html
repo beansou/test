@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>4:6 Future Brew</title>
     
-    <!-- iOS PWA Settings -->
+    <!-- iOS PWA Settings - Enforce Full Screen -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="4:6 Brew">
     <meta name="theme-color" content="#000000">
 
     <!-- Dependencies -->
@@ -18,6 +19,13 @@
     
     <style>
         /* iOS 26 Base Styles */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevent elastic scrolling */
+            position: fixed; /* Lock body for PWA */
+        }
+
         body { 
             background-color: #000;
             color: #fff;
@@ -25,7 +33,6 @@
             -webkit-font-smoothing: antialiased;
             user-select: none;
             -webkit-user-select: none;
-            overflow: hidden;
             touch-action: manipulation;
         }
 
@@ -571,28 +578,26 @@
                 return (
                     <div className="h-screen w-full flex flex-col items-center justify-center relative overflow-hidden">
                         <BackgroundEffect color={countdown === 0 ? "bg-amber-500" : "bg-cyan-500"} />
-                        <div className="relative z-10 h-full w-full">
+                        <div className="relative z-10 h-full w-full flex flex-col items-center justify-center">
                             
-                            {/* Main Visual (Number) - Absolute Center Top Offset */}
-                            {/* v2.35: Fixed top-[42%] for perfect alignment with Brewing */}
-                            <div className="absolute top-[42%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center w-full">
+                            {/* Main Visual (Number) and Status */}
+                            <div className="flex flex-col items-center justify-center">
                                 {/* Big Number */}
                                 <h1 className={`text-[12rem] font-extralight leading-none transition-all duration-300 tabular-nums text-center w-full ${countdown === 0 ? 'scale-110 text-white text-glow' : 'text-white/90'}`}>
                                     {countdown === 0 ? "GO" : countdown}
                                 </h1>
                                 
                                 {/* Status Text */}
-                                <div className="mt-2">
+                                <div className="mt-2 mb-4">
                                     <p className="text-xl tracking-[0.5em] uppercase text-white/60 animate-pulse whitespace-nowrap text-center">
                                         {countdown === 0 ? "START BREW" : "READY"}
                                     </p>
                                 </div>
-                            </div>
 
-                            {/* Target Weight - Fixed Absolute Position */}
-                            {/* v2.35: Unified top-[68%] position for both screens */}
-                            <div className="absolute top-[68%] left-1/2 transform -translate-x-1/2 z-30">
-                                <TargetWeightDisplay value={Math.round(steps[0].cumulative)} />
+                                {/* Target Weight - Directly below "READY" */}
+                                <div className="mt-2">
+                                    <TargetWeightDisplay value={Math.round(steps[0].cumulative)} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -780,7 +785,7 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.35</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.36</p>
                             </div>
 
                         </main>
@@ -821,7 +826,7 @@
                         </button>
                     </header>
 
-                    <main className="flex-1 z-10 flex flex-col items-center justify-start pt-12 relative min-h-0"> 
+                    <main className="flex-1 z-10 flex flex-col items-center justify-start pt-20 relative min-h-0"> 
                         
                         {isFinished ? (
                             // Finished State
@@ -842,37 +847,33 @@
                                 </button>
                             </div>
                         ) : (
-                            // Brewing State - MINIMALIST ZEN MODE (v2.35)
+                            // Brewing State - MINIMALIST ZEN MODE (v2.36)
                             <>
-                                <div className="h-full w-full relative">
+                                <div className="h-full w-full relative flex flex-col items-center">
                                     
-                                    {/* 1. Main Visual (Timer) - Absolute Center Top Offset */}
-                                    {/* v2.35: Fixed top-[42%] matches Countdown */}
-                                    <div className="absolute top-[42%] left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                        <div className="relative">
-                                            <div className="absolute inset-0 flex items-center justify-center text-[10rem] font-thin text-white/5 select-none pointer-events-none">
-                                                {/* Optional: big subtle background number */}
-                                            </div>
-                                            <SegmentedTimer 
-                                                steps={steps}
-                                                currentStepIndex={currentStepIndex}
-                                                remainingTimeInStep={remainingTimeInStep} 
-                                                currentStepDuration={currentStep.duration}
-                                                size={window.innerWidth < 380 ? 240 : 280} // Responsive size
-                                            >
-                                                <div className="flex flex-col items-center">
-                                                    <h1 className="text-9xl font-thin tabular-nums text-white text-glow leading-none tracking-tighter">
-                                                        {remainingTimeInStep}
-                                                    </h1>
-                                                    <p className="text-white/40 text-xs font-mono tracking-[0.5em] mt-2">SECONDS</p>
-                                                </div>
-                                            </SegmentedTimer>
+                                    {/* 1. Main Visual (Timer) - Moved to top, below header */}
+                                    <div className="relative mb-6 mt-10">
+                                        <div className="absolute inset-0 flex items-center justify-center text-[10rem] font-thin text-white/5 select-none pointer-events-none">
+                                            {/* Optional: big subtle background number */}
                                         </div>
+                                        <SegmentedTimer 
+                                            steps={steps}
+                                            currentStepIndex={currentStepIndex}
+                                            remainingTimeInStep={remainingTimeInStep} 
+                                            currentStepDuration={currentStep.duration}
+                                            size={window.innerWidth < 380 ? 240 : 280} // Responsive size
+                                        >
+                                            <div className="flex flex-col items-center">
+                                                <h1 className="text-9xl font-thin tabular-nums text-white text-glow leading-none tracking-tighter">
+                                                    {remainingTimeInStep}
+                                                </h1>
+                                                <p className="text-white/40 text-xs font-mono tracking-[0.5em] mt-2">SECONDS</p>
+                                            </div>
+                                        </SegmentedTimer>
                                     </div>
 
-                                    {/* 2. Target Weight (SECONDARY) - Absolute Fixed Position */}
-                                    {/* v2.35: Fixed top-[68%] matches Countdown */}
-                                    <div className="absolute top-[68%] left-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center z-30">
+                                    {/* 2. Target Weight (SECONDARY) - Below Timer */}
+                                    <div className="flex flex-col items-center justify-center z-30 mt-4">
                                         <TargetWeightDisplay value={Math.round(currentStep.cumulative)} />
                                         
                                         {/* Next Target Hint - Relative to Target Weight */}
