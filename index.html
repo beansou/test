@@ -592,17 +592,17 @@
                         
                         {/* UNIFIED LAYOUT: Visual Center */}
                         {/* Fixed position for the Main Visual (Number) */}
-                        {/* Centered at top 40% of screen to leave room below */}
-                        <div className="absolute top-[40%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
+                        {/* Centered at top 35% of screen (LIFTED UP) */}
+                        <div className="absolute top-[35%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
                              <h1 className={`text-[12rem] font-extralight leading-none transition-all duration-300 tabular-nums text-center w-full ${countdown === 0 ? 'scale-110 text-white text-glow' : 'text-white/90'}`}>
                                 {countdown === 0 ? "GO" : countdown}
                             </h1>
                         </div>
 
                         {/* UNIFIED LAYOUT: Data Cluster */}
-                        {/* Fixed position starting at top 58% of screen */}
+                        {/* Fixed position starting at top 50% of screen (LIFTED UP & CLOSER) */}
                         {/* Guaranteed alignment for "READY" and "Target Weight" */}
-                        <div className="absolute top-[58%] left-0 right-0 flex flex-col items-center">
+                        <div className="absolute top-[50%] left-0 right-0 flex flex-col items-center">
                             
                             {/* Status Text (Placeholder height matching Brewing Spacer) */}
                              <div className="mb-4 h-7 flex items-center justify-center">
@@ -798,7 +798,7 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.43</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.44</p>
                             </div>
 
                         </main>
@@ -860,11 +860,12 @@
                                 </button>
                             </div>
                         ) : (
-                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.43)
+                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.44)
                             // Using identical container structure as Countdown screen to guarantee pixel-perfect alignment
                             <>
                                 {/* 1. Main Visual (Timer) - Fixed Center Position */}
-                                <div className="absolute top-[40%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
+                                {/* Centered at top 35% of screen (LIFTED UP to match new Countdown center) */}
+                                <div className="absolute top-[35%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
                                      <SegmentedTimer 
                                         steps={steps}
                                         currentStepIndex={currentStepIndex}
@@ -882,9 +883,11 @@
                                 </div>
 
                                 {/* 2. Data Cluster - Fixed Start Position */}
-                                <div className="absolute top-[58%] left-0 right-0 flex flex-col items-center">
+                                {/* Fixed position starting at top 50% of screen (Matches new Countdown anchor) */}
+                                <div className="absolute top-[50%] left-0 right-0 flex flex-col items-center">
                                     
                                     {/* Invisible Spacer (Matches 'READY' height) */}
+                                    {/* Overlaps the bottom of the circle slightly, which is fine as it's invisible */}
                                     <div className="mb-4 h-7 w-1"></div>
 
                                     {/* Target Weight Display */}
@@ -902,7 +905,6 @@
                                         )}
                                     </div>
                                     
-                                    {/* Step Counter (Relative to Data Cluster now?) No, keep absolute bottom */}
                                 </div>
 
                                 {/* Step Counter (Footer) - Kept independent */}
