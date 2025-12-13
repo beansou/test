@@ -5,16 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>4:6 Future Brew</title>
     
-    <!-- iOS PWA Settings -->
+    <!-- iOS PWA Settings (Strictly following v2.20) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="4:6 Brew">
     <meta name="theme-color" content="#000000">
-
-    <!-- Cache Control -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
 
     <!-- Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -22,11 +17,9 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- CSS (Strictly following v2.20) -->
     <style>
-        /* iOS 26 Base Styles */
-        html {
-            height: -webkit-fill-available;
-        }
+        /* iOS 26 Base Styles - Reverted to v2.20 clean style */
         body { 
             background-color: #000;
             color: #fff;
@@ -34,17 +27,8 @@
             -webkit-font-smoothing: antialiased;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation;
-            height: 100vh;
-            height: 100dvh; 
-            width: 100vw;
             overflow: hidden;
-            position: fixed;
-        }
-
-        #root {
-            height: 100%;
-            width: 100%;
+            touch-action: manipulation;
         }
 
         /* Ambient Animation */
@@ -131,11 +115,6 @@
         }
         .text-glow-amber {
             text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
-        }
-
-        /* Circle Progress Transition */
-        .circle-progress {
-            transition: stroke-dashoffset 1s linear;
         }
     </style>
 </head>
@@ -236,7 +215,7 @@
             </IconBase>
         );
 
-        // --- "Flow" Segmented Timer (v2.29 Inverted Logic) ---
+        // --- "Flow" Segmented Timer (Preserving v2.47 Feature) ---
         const SegmentedTimer = ({ steps, currentStepIndex, remainingTimeInStep, currentStepDuration, size = 280, children }) => {
             const strokeWidth = 10;
             const radius = (size - strokeWidth) / 2;
@@ -254,7 +233,7 @@
                             const isPast = index < currentStepIndex;
                             const isFuture = index > currentStepIndex;
                             
-                            // Visual Logic v2.29:
+                            // Visual Logic:
                             let progress = 0;
                             if (isActive) {
                                 progress = 1 - Math.max(0, Math.min(1, remainingTimeInStep / currentStepDuration));
@@ -266,8 +245,6 @@
                             
                             return (
                                 <g key={index} transform={`rotate(${rotation} ${size/2} ${size/2})`}>
-                                    
-                                    {/* 1. Base Track (Gray -> White) */}
                                     <circle
                                         cx={size / 2}
                                         cy={size / 2}
@@ -279,12 +256,10 @@
                                         strokeDashoffset={0}
                                         strokeLinecap="round"
                                         style={{ 
-                                            transition: 'stroke 1.5s ease-in-out', // Slow reveal of the white base
+                                            transition: 'stroke 1.5s ease-in-out',
                                             filter: isActive ? 'drop-shadow(0 0 5px rgba(255,255,255,0.3))' : 'none'
                                         }}
                                     />
-
-                                    {/* 2. Amber Overlay (Growing) */}
                                     {(isActive || isPast) && (
                                         <circle
                                             cx={size / 2}
@@ -338,7 +313,6 @@
             
             const beansInputRef = useRef(null);
             const ratioControlRef = useRef(null);
-            const activeStepRef = useRef(null);
 
             // Refs
             const intervalRef = useRef(null);
@@ -353,12 +327,10 @@
             const getSteps = () => {
                 let steps = [];
                 let s1, s2;
-                // 4:6 Method Logic
                 if (flavor === 'sweet') { s1 = phase1Water * 0.4; s2 = phase1Water * 0.6; }
                 else if (flavor === 'acidic') { s1 = phase1Water * 0.6; s2 = phase1Water * 0.4; }
                 else { s1 = phase1Water * 0.5; s2 = phase1Water * 0.5; } // balanced
                 
-                // Updated v2.31: Simpler English names
                 steps.push({ weight: s1, cumulative: s1, text: "Bloom", duration: 45, phase: 'Flavor' });
                 steps.push({ weight: s2, cumulative: s1 + s2, text: "Flavor", duration: 45, phase: 'Flavor' });
 
@@ -387,26 +359,21 @@
 
             // --- Effects ---
             
-            // Global Click Outside Handler for Ratio Editor
             useEffect(() => {
                 if (!isEditingRatio) return;
-
                 const handleClickOutside = (e) => {
                     if (ratioControlRef.current && !ratioControlRef.current.contains(e.target)) {
                         setIsEditingRatio(false);
                     }
                 };
-
                 document.addEventListener('mousedown', handleClickOutside);
                 document.addEventListener('touchstart', handleClickOutside);
-
                 return () => {
                     document.removeEventListener('mousedown', handleClickOutside);
                     document.removeEventListener('touchstart', handleClickOutside);
                 };
             }, [isEditingRatio]);
 
-            // Wake Lock
             useEffect(() => {
                 const requestWakeLock = async () => {
                     try {
@@ -429,7 +396,6 @@
                 return () => releaseWakeLock();
             }, [isBrewing, countdown]);
 
-            // Audio Functions
             const initAudio = () => {
                 if (!audioCtxRef.current) {
                     audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -442,7 +408,6 @@
             const playBeep = (type) => {
                 if (!soundEnabled) return;
                 const ctx = initAudio();
-                
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.connect(gain);
@@ -464,36 +429,27 @@
                 }
             };
 
-            // Success Sound
             const playSuccessSound = () => {
                 if (!soundEnabled) return;
                 const ctx = initAudio();
                 const now = ctx.currentTime;
-                
                 const notes = [523.25, 659.25, 783.99, 1046.50];
-                
                 notes.forEach((freq, i) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-                    
                     osc.connect(gain);
                     gain.connect(ctx.destination);
-                    
                     const startTime = now + (i * 0.1); 
-                    
                     osc.frequency.setValueAtTime(freq, startTime);
                     osc.type = 'sine';
-                    
                     gain.gain.setValueAtTime(0, startTime);
                     gain.gain.linearRampToValueAtTime(0.1, startTime + 0.05);
                     gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.5);
-                    
                     osc.start(startTime);
                     osc.stop(startTime + 1.5);
                 });
             };
 
-            // Countdown Logic
             useEffect(() => {
                 if (countdown === null) return;
                 if (countdown > 0) {
@@ -512,7 +468,6 @@
                 }
             }, [countdown]);
 
-            // Brewing Logic
             useEffect(() => {
                 if (isBrewing) {
                     intervalRef.current = setInterval(() => setTimer(prev => prev + 1), 1000);
@@ -520,28 +475,21 @@
                 return () => clearInterval(intervalRef.current);
             }, [isBrewing]);
 
-            // Step Transitions
             useEffect(() => {
                 if (!isBrewing) return;
                 let timeAccumulated = 0;
                 for (let i = 0; i < currentStepIndex; i++) timeAccumulated += steps[i].duration;
                 const stepEndTime = timeAccumulated + currentStep.duration;
-                
-                // Identify if this is the last step
                 const isLastStep = currentStepIndex === steps.length - 1;
 
                 if (timer > 0) {
                     const timeRemaining = stepEndTime - timer;
-                    // Modified: Do NOT play tick sound if it is the last step
                     if (!isLastStep && timeRemaining <= 3 && timeRemaining >= 1) {
                         playBeep('tick');
                     }
                 }
                 if (timer > 0 && timer === stepEndTime) {
-                    // Start sound for next step if NOT last step
-                    if (!isLastStep) {
-                         playBeep('start');
-                    }
+                    if (!isLastStep) playBeep('start');
                 }
 
                 if (timer >= stepEndTime) {
@@ -554,7 +502,6 @@
                 }
             }, [timer, isBrewing, currentStepIndex, steps]);
 
-            // Handlers
             const handleStart = () => {
                 initAudio();
                 setCountdown(3);
@@ -567,9 +514,6 @@
                 if (!isNaN(val) && val >= 10 && val <= 40) setBeans(Math.round(val));
                 setIsEditingBeans(false);
             };
-
-
-            // --- UI RENDERERS ---
 
             // Helper Component for Target Weight (Shared)
             const TargetWeightDisplay = ({ value }) => (
@@ -584,14 +528,17 @@
                 </div>
             );
 
+            // --- UI RENDERERS ---
+
             // 1. Countdown View
             if (countdown !== null) {
                 return (
-                    <div className="h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-black">
+                    // Using v2.20 Container Style: h-screen without bg-black override
+                    <div className="h-screen w-full flex flex-col items-center justify-center relative overflow-hidden">
                         <BackgroundEffect color={countdown === 0 ? "bg-amber-500" : "bg-cyan-500"} />
                         
                         {/* UNIFIED LAYOUT: Visual Center */}
-                        {/* Centered at top 35% of screen (Lifted Up) */}
+                        {/* Centered at top 35% of screen */}
                         <div className="absolute top-[35%] left-0 right-0 flex justify-center items-center h-[300px] -translate-y-1/2">
                              <h1 className={`text-[12rem] font-extralight leading-none transition-all duration-300 tabular-nums text-center w-full ${countdown === 0 ? 'scale-110 text-white text-glow' : 'text-white/90'}`}>
                                 {countdown === 0 ? "GO" : countdown}
@@ -599,10 +546,10 @@
                         </div>
 
                         {/* UNIFIED LAYOUT: Data Cluster */}
-                        {/* Fixed position starting at top 47% (Moved DOWN from 45% by 2%) */}
-                        <div className="absolute top-[47%] left-0 right-0 flex flex-col items-center">
+                        {/* Fixed position starting at top 49% (Moved DOWN from 47%) */}
+                        <div className="absolute top-[49%] left-0 right-0 flex flex-col items-center">
                             
-                            {/* Status Text (INCREASED SPACING: mb-9 to push Target Weight back down) */}
+                            {/* Status Text (Spacing buffer mb-9) */}
                              <div className="mb-9 h-7 flex items-center justify-center">
                                 <p className="text-xl tracking-[0.5em] uppercase text-white/60 animate-pulse whitespace-nowrap text-center">
                                     {countdown === 0 ? "START BREW" : "READY"}
@@ -621,7 +568,7 @@
             // 2. Setup View
             if (!isBrewing && timer === 0) {
                 return (
-                    <div className="h-screen w-full flex flex-col relative overflow-hidden bg-black">
+                    <div className="h-screen w-full flex flex-col relative overflow-hidden">
                         <BackgroundEffect color="bg-amber-800" />
                         
                         <header className="pt-14 pb-4 px-6 flex justify-between items-center z-10">
@@ -641,7 +588,7 @@
 
                         <main className="flex-1 overflow-y-auto px-6 pb-48 z-10 space-y-6 pt-4 no-scrollbar">
                             
-                            {/* Setup Controls (Beans, Ratio, Flavor, Strength) */}
+                            {/* Setup Controls */}
                             <section className="glass-panel rounded-[2rem] p-8 text-center relative overflow-hidden group">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
                                 <h2 className="text-sm uppercase tracking-widest text-amber-500/80 mb-6 font-medium">Coffee Beans</h2>
@@ -796,13 +743,13 @@
                             </section>
                             
                             <div className="w-full flex justify-end py-4 pr-2">
-                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.47</p>
+                                <p className="text-[10px] text-white/40 font-mono tracking-widest hover:text-white/60 transition-colors">v2.48</p>
                             </div>
 
                         </main>
 
-                        {/* UPDATED v2.45: Significantly increased bottom padding to prevent cropping and lift button */}
-                        <div className="absolute bottom-0 left-0 right-0 flex justify-center z-20 bg-gradient-to-t from-black/80 via-black/80 via-60% to-transparent pt-24 pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
+                        {/* BOTTOM BUTTON: Using v2.20 style "absolute bottom-12" to avoid safe-area issues */}
+                        <div className="absolute bottom-12 left-0 right-0 flex justify-center z-20">
                              <button 
                                 onClick={handleStart}
                                 className="px-10 py-5 bg-amber-900/20 text-amber-500 rounded-full flex items-center gap-3 shadow-[0_0_40px_rgba(245,158,11,0.15)] border border-amber-500/50 backdrop-blur-xl active:scale-95 transition-all duration-200 hover:bg-amber-900/40 hover:text-amber-400"
@@ -819,7 +766,7 @@
             const isFinished = !isBrewing && timer > 0;
 
             return (
-                <div className="h-screen w-full flex flex-col relative overflow-hidden bg-black"> 
+                <div className="h-screen w-full flex flex-col relative overflow-hidden"> 
                     <BackgroundEffect color={isFinished ? "bg-green-600" : "bg-amber-900"} />
                     
                     <header className="absolute top-0 left-0 right-0 pt-14 pb-2 px-6 flex justify-between items-center z-20"> 
@@ -859,7 +806,8 @@
                                 </button>
                             </div>
                         ) : (
-                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.47)
+                            // Brewing State - UNIFIED ABSOLUTE LAYOUT (v2.48)
+                            // Following v2.20 container structure but v2.47 content
                             <>
                                 {/* 1. Main Visual (Timer) - Fixed Center Position */}
                                 {/* Centered at top 35% of screen */}
@@ -881,10 +829,10 @@
                                 </div>
 
                                 {/* 2. Data Cluster - Fixed Start Position */}
-                                {/* Fixed position starting at top 47% (Moved DOWN from 45% by 2%) */}
-                                <div className="absolute top-[47%] left-0 right-0 flex flex-col items-center">
+                                {/* Fixed position starting at top 49% (Moved DOWN from 47%) */}
+                                <div className="absolute top-[49%] left-0 right-0 flex flex-col items-center">
                                     
-                                    {/* Invisible Spacer (Matches 'READY' height) - Reduced margin mb-9 */}
+                                    {/* Invisible Spacer (Matches 'READY' height) - mb-9 */}
                                     <div className="mb-9 h-7 w-1"></div>
 
                                     {/* Target Weight Display */}
